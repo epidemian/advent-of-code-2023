@@ -2,58 +2,29 @@ use std::{error::Error, io};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let input = io::read_to_string(io::stdin())?;
-    let ans_1: i32 = input
-        .lines()
-        .map(|line| {
-            let first_digit = line.chars().find(|ch| ch.is_numeric()).unwrap_or('0');
-            let last_digit = line.chars().rev().find(|ch| ch.is_numeric()).unwrap_or('0');
-            String::from_iter([first_digit, last_digit])
-                .parse::<i32>()
-                .unwrap()
-        })
-        .sum();
-    println!("{ans_1}");
+    let ans_1: u32 = input.lines().filter_map(calibration_value).sum();
+    let ans_2: u32 = input.lines().filter_map(calibration_value_p2).sum();
+    println!("{ans_1} {ans_2}");
+    Ok(())
+}
 
-    let num_names = [
+fn calibration_value(line: &str) -> Option<u32> {
+    let digits: Vec<_> = line.chars().filter_map(|ch| ch.to_digit(10)).collect();
+    Some(digits.first()? * 10 + digits.last()?)
+}
+
+fn calibration_value_p2(line: &str) -> Option<u32> {
+    let num_words = [
         "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
     ];
-    let ans_2: usize = input
-        .lines()
-        .map(|line| {
-            let mut first_digit = 0;
-            for i in 0..line.len() {
-                let ch = line.as_bytes()[i] as char;
-                if ch.is_numeric() {
-                    first_digit = String::from(ch).parse().unwrap();
-                    break;
-                };
-                if let Some(pos) = num_names
-                    .iter()
-                    .position(|num_name| line[i..].starts_with(num_name))
-                {
-                    first_digit = pos + 1;
-                    break;
-                }
-            }
-            let mut last_digit = 0;
-            for i in (0..line.len()).rev() {
-                let ch = line.as_bytes()[i] as char;
-                if ch.is_numeric() {
-                    last_digit = String::from(ch).parse().unwrap();
-                    break;
-                };
-                if let Some(pos) = num_names
-                    .iter()
-                    .position(|num_name| line[i..].starts_with(num_name))
-                {
-                    last_digit = pos + 1;
-                    break;
-                }
-            }
-            first_digit * 10 + last_digit
+    let digits: Vec<_> = line
+        .char_indices()
+        .filter_map(|(i, ch)| {
+            ch.to_digit(10).or_else(|| {
+                let p = num_words.iter().position(|w| line[i..].starts_with(w))?;
+                Some((p + 1) as u32)
+            })
         })
-        .sum();
-
-    println!("{ans_2}");
-    Ok(())
+        .collect();
+    Some(digits.first()? * 10 + digits.last()?)
 }
