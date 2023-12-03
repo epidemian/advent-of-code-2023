@@ -1,8 +1,9 @@
+use itertools::Itertools;
 use std::{error::Error, io};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let input = io::read_to_string(io::stdin())?;
-    let games: Vec<_> = input.lines().map(Game::parse).collect::<Result<_, _>>()?;
+    let games: Vec<_> = input.lines().map(Game::parse).try_collect()?;
 
     let ans_1: u32 = games.iter().filter(|g| g.is_possible()).map(|g| g.id).sum();
     let ans_2: u32 = games.iter().map(|g| g.minimum_set().power()).sum();
@@ -20,10 +21,7 @@ impl Game {
         let (id_part, sets_part) = s.split_once(": ").ok_or("malformed game line")?;
         let id = id_part.strip_prefix("Game ").ok_or("malformed game line")?;
         let id = id.parse()?;
-        let sets = sets_part
-            .split("; ")
-            .map(CubeSet::parse)
-            .collect::<Result<_, _>>()?;
+        let sets = sets_part.split("; ").map(CubeSet::parse).try_collect()?;
         Ok(Game { id, sets })
     }
 
