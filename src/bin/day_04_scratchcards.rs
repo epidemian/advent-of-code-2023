@@ -1,33 +1,38 @@
-use std::{error::Error, io};
+use std::{collections::HashSet, error::Error, io};
 
 use itertools::Itertools;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let input = io::read_to_string(io::stdin())?;
     let cards: Vec<_> = input.lines().map(parse_card).try_collect()?;
-    let score_sum: u32 = cards.iter().map(card_score).sum();
-    println!("{score_sum}");
+
+    let win_counts: Vec<_> = cards
+        .iter()
+        .map(|(winning_numbers, my_numbers)| my_numbers.intersection(winning_numbers).count())
+        .collect();
+    let total_points: u32 = win_counts
+        .iter()
+        .map(|&count| if count == 0 { 0 } else { 1 << count - 1 })
+        .sum();
+
+    let mut card_copies = vec![1; win_counts.len()];
+    for (i, &win_count) in win_counts.iter().enumerate() {
+        for j in i + 1..=i + win_count {
+            card_copies[j] += card_copies[i];
+        }
+    }
+    let total_cards: usize = card_copies.iter().sum();
+
+    println!("{total_points} {total_cards}");
     Ok(())
 }
 
-fn parse_card(line: &str) -> Result<(Vec<u32>, Vec<u32>), Box<dyn Error>> {
+fn parse_card(line: &str) -> Result<(HashSet<u32>, HashSet<u32>), Box<dyn Error>> {
     let (_, numbers_part) = line.split_once(": ").ok_or("malformed card line")?;
     let (left, right) = numbers_part
         .split_once(" | ")
         .ok_or("malformed card line")?;
-    let winning_numbers: Vec<u32> = left.split_whitespace().map(str::parse).try_collect()?;
-    let my_numbers: Vec<u32> = right.split_whitespace().map(str::parse).try_collect()?;
+    let winning_numbers: HashSet<u32> = left.split_whitespace().map(str::parse).try_collect()?;
+    let my_numbers: HashSet<u32> = right.split_whitespace().map(str::parse).try_collect()?;
     Ok((winning_numbers, my_numbers))
-}
-
-fn card_score((winning_numbers, my_numbers): &(Vec<u32>, Vec<u32>)) -> u32 {
-    let count = my_numbers
-        .iter()
-        .filter(|my_num| winning_numbers.contains(my_num))
-        .count();
-    if count == 0 {
-        0
-    } else {
-        1 << count - 1
-    }
 }
