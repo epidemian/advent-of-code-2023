@@ -32,7 +32,7 @@ fn parse_card(line: &str) -> Result<(HashSet<u32>, HashSet<u32>), Box<dyn Error>
     let (left, right) = numbers_part
         .split_once(" | ")
         .ok_or("malformed card line")?;
-    let winning_numbers: HashSet<u32> = left.split_whitespace().map(str::parse).try_collect()?;
-    let my_numbers: HashSet<u32> = right.split_whitespace().map(str::parse).try_collect()?;
+    let winning_numbers = left.split_whitespace().map(str::parse).try_collect()?;
+    let my_numbers = right.split_whitespace().map(str::parse).try_collect()?;
     Ok((winning_numbers, my_numbers))
 }
