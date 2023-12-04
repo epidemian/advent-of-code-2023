@@ -68,8 +68,8 @@ fn get_number_spans(grid: &Grid) -> Vec<(u32, usize, usize, usize)> {
                 while end_x + 1 < line.len() && at(end_x + 1, y, grid).is_ascii_digit() {
                     end_x += 1;
                 }
-                let num_slice = &line[x..=end_x];
-                let num = num_slice.parse().unwrap();
+                // Note: this parse() should not fail as the slice should contain only ASCII digits.
+                let num = line[x..=end_x].parse().unwrap();
                 spans.push((num, x, end_x, y));
                 x = end_x + 1;
             } else {
