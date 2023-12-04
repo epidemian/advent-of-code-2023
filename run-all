@@ -1,0 +1,12 @@
+#!/bin/bash
+set -o errexit -o nounset -o pipefail
+
+cargo build --release --quiet
+
+for bin in target/release/day_*
+do
+    [ -x "$bin" ] || continue
+    daynum=$(sed -E 's/.*day_([0-9]*)_.*/\1/' <<<$bin)
+    echo -n "Day $daynum: "
+    "$bin" <inputs/$daynum/input.txt
+done
