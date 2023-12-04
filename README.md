@@ -12,6 +12,36 @@ My solutions for [2023's Advent of Code](https://adventofcode.com/2023).
 - Avoiding external dependencies is a non-goal
   - But only include well-known and defacto-standard libraries for specific purposes (e.g. regex, itertools, Rayon, anyhow)
 
+## Running stuff
+
+You need to have Rust installed (see "rustup").
+
+To run a single daily solution use:
+
+```bash
+cargo run --bin day_02_cube_conundrum < inputs/02/input.txt
+```
+
+(You may type `day_02`<kbd>tab</kbd> to tab-complete the binary name 😉)
+
+Or you can also pass it a sample file:
+
+```bash
+cargo run --bin day_02_cube_conundrum < inputs/02/sample.txt
+```
+
+To run all daily solutions with their input files run:
+
+```
+./run-all
+```
+
+And to check all sample files against their expected output and all input files against the answers on `answers.txt` run:
+
+```
+./check-all
+```
+
 ## Notes & Learnings
 
 ### Day 1: Trebuchet?!
