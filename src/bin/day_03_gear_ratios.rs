@@ -98,7 +98,7 @@ fn neighbors<'a>(
     .into_iter()
     .filter_map(move |(dx, dy)| {
         let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-        let byte = *grid.get(nx)?.as_bytes().get(ny)?;
+        let byte = *grid.get(ny)?.as_bytes().get(nx)?;
         Some((nx, ny, byte))
     })
 }
