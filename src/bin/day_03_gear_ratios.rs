@@ -6,117 +6,99 @@ use std::{
 
 fn main() -> Result<(), Box<dyn Error>> {
     let input = io::read_to_string(io::stdin())?;
-    let engine_grid: Vec<&str> = input.lines().collect();
+    let grid: Vec<&str> = input.lines().collect();
+    let number_spans = get_number_spans(&grid);
 
-    let at = |x: usize, y: usize| engine_grid[y].as_bytes()[x];
+    // Part 1
+    let part_numbers_sum: u32 = number_spans
+        .iter()
+        .filter(|&&(_n, start_x, end_x, y)| is_part_number(start_x, end_x, y, &grid))
+        .map(|(n, ..)| n)
+        .sum();
 
-    let mut sum = 0;
-    for (y, line) in engine_grid.iter().enumerate() {
-        let mut x = 0;
-        while x < line.len() {
-            if at(x, y).is_ascii_digit() {
-                let mut num_len = 1;
-                while x + num_len < line.len() {
-                    if !at(x + num_len, y).is_ascii_digit() {
-                        break;
-                    }
-                    num_len += 1;
-                }
-                let is_part_number = (x..x + num_len).any(|x| {
-                    neighbors(x, y, &engine_grid)
-                        .any(|(nx, ny)| !at(nx, ny).is_ascii_digit() && at(nx, ny) != b'.')
-                });
-                if is_part_number {
-                    let num_slice = &line[x..x + num_len];
-                    let num: u32 = num_slice.parse()?;
-                    sum += num;
-                }
-                x += num_len;
-            } else {
-                x += 1;
-            }
-        }
-    }
-    println!("{sum}");
-
+    // Part 2
     let mut numbers_by_xy = HashMap::new();
-    for (num, x, y, num_len) in get_all_numbers(&engine_grid) {
-        for x in x..x + num_len {
+    for (num, start_x, end_x, y) in number_spans {
+        for x in start_x..=end_x {
             numbers_by_xy.insert((x, y), num);
         }
     }
-    let mut gear_ratio_sum = 0;
-    for (y, line) in engine_grid.iter().enumerate() {
+    let mut gear_ratios_sum = 0;
+    for (y, line) in grid.iter().enumerate() {
         for (x, byte) in line.bytes().enumerate() {
             if byte == b'*' {
                 let mut neighbor_nums = HashSet::new();
-                for (nx, ny) in neighbors(x, y, &engine_grid) {
+                for (nx, ny, _b) in neighbors(x, y, &grid) {
                     if let Some(num) = numbers_by_xy.get(&(nx, ny)) {
                         neighbor_nums.insert(*num);
                     }
                 }
                 if neighbor_nums.len() == 2 {
-                    gear_ratio_sum += neighbor_nums.iter().product::<u32>();
+                    gear_ratios_sum += neighbor_nums.iter().product::<u32>();
                 }
             }
         }
     }
-    println!("{gear_ratio_sum}");
+
+    println!("{part_numbers_sum} {gear_ratios_sum}");
     Ok(())
 }
 
-fn get_all_numbers(engine_grid: &[&str]) -> Vec<(u32, usize, usize, usize)> {
-    let mut nums = vec![];
-    let at = |x: usize, y: usize| engine_grid[y].as_bytes()[x];
-    for (y, line) in engine_grid.iter().enumerate() {
+type Grid<'a> = [&'a str];
+
+fn is_part_number(start_x: usize, end_x: usize, y: usize, grid: &Grid) -> bool {
+    (start_x..=end_x).any(|x| {
+        neighbors(x, y, &grid).any(|(_x, _y, byte)| !byte.is_ascii_digit() && byte != b'.')
+    })
+}
+
+fn at(x: usize, y: usize, grid: &Grid) -> u8 {
+    grid[y].as_bytes()[x]
+}
+
+// Finds all numbers on the grid and returns tuples with (number, start_x, end_x, y) where
+// start_x..=end_x is the span of the number on the grid.
+fn get_number_spans(grid: &Grid) -> Vec<(u32, usize, usize, usize)> {
+    let mut spans = vec![];
+    for (y, line) in grid.iter().enumerate() {
         let mut x = 0;
         while x < line.len() {
-            if at(x, y).is_ascii_digit() {
-                let mut num_len = 1;
-                while x + num_len < line.len() {
-                    if !at(x + num_len, y).is_ascii_digit() {
-                        break;
-                    }
-                    num_len += 1;
+            if at(x, y, grid).is_ascii_digit() {
+                let mut end_x = x;
+                while end_x + 1 < line.len() && at(end_x + 1, y, grid).is_ascii_digit() {
+                    end_x += 1;
                 }
-                let num_slice = &line[x..x + num_len];
+                let num_slice = &line[x..=end_x];
                 let num = num_slice.parse().unwrap();
-                nums.push((num, x, y, num_len));
-                x += num_len;
+                spans.push((num, x, end_x, y));
+                x = end_x + 1;
             } else {
                 x += 1;
             }
         }
     }
-    nums
+    spans
 }
 
 fn neighbors<'a>(
     x: usize,
     y: usize,
-    engine_grid: &'a [&str],
-) -> impl Iterator<Item = (usize, usize)> + 'a {
-    let (x, y) = (x as isize, y as isize);
+    grid: &'a Grid,
+) -> impl Iterator<Item = (usize, usize, u8)> + 'a {
     [
-        (x - 1, y - 1),
-        (x, y - 1),
-        (x + 1, y - 1),
-        (x - 1, y),
-        (x + 1, y),
-        (x - 1, y + 1),
-        (x, y + 1),
-        (x + 1, y + 1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
     ]
     .into_iter()
-    .filter_map(|(x, y)| {
-        if y >= 0
-            && y < engine_grid.len() as isize
-            && x >= 0
-            && x < engine_grid[y as usize].len() as isize
-        {
-            Some((x as usize, y as usize))
-        } else {
-            None
-        }
+    .filter_map(move |(dx, dy)| {
+        let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
+        let byte = *grid.get(nx)?.as_bytes().get(ny)?;
+        Some((nx, ny, byte))
     })
 }
