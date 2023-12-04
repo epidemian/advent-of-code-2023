@@ -61,3 +61,7 @@ One of those puzzles that involve more parsing than actual calculations, but it 
 ### Day 3: Gear Ratios
 
 A grid puzzle with some tricky parsing problems, as the numbers on the grid span multiple cells and need to be consider as a single thing. I quite liked the use of `usize::wrapping_add_signed()` to be explicit about wrapping behavior and avoid having many back and forth `as isize/usize` conversions.
+
+### Day 4: Scratchcards
+
+A simple and enjoyable Monday puzzle. Part 2 looked intimidating at first, but was relatively easy once given a little bit og thought :)
