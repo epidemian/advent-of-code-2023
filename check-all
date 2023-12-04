@@ -1,0 +1,11 @@
+#!/bin/bash
+set -o errexit -o nounset -o pipefail
+
+./check-samples
+
+if ./run-all | diff answers.txt -
+then
+    echo -e "\033[0;32mOK\033[0m answers.txt check"
+else
+    echo -e "\033[0;31mFAIL\033[0m answers.txt check"
+fi

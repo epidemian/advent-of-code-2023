@@ -1,0 +1,22 @@
+#!/bin/bash
+set -o errexit -o nounset -o pipefail
+
+cargo build --quiet
+
+for bin in target/debug/day_*
+do
+    [ -x "$bin" ] || continue
+    daynum=$(sed -E 's/.*day_([0-9]*)_.*/\1/' <<<$bin)
+    for sample in inputs/$daynum/sample*.txt
+    do
+        expected=${sample/.txt/_out.txt}
+        [ -f "$expected" ] || continue
+
+        if $bin < $sample | diff $expected -
+        then
+            echo -e "\033[0;32mOK\033[0m $(basename $bin) < $(basename $sample)"
+        else
+            echo -e "\033[0;31mFAIL\033[0m $(basename $bin) < $(basename $sample)"
+        fi
+    done
+done
