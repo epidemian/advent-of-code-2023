@@ -12,7 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .collect();
     let total_points: u32 = win_counts
         .iter()
-        .map(|&count| if count == 0 { 0 } else { 1 << count - 1 })
+        .map(|&count| if count == 0 { 0 } else { 1 << (count - 1) })
         .sum();
 
     let mut card_copies = vec![1; win_counts.len()];

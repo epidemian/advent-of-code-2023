@@ -47,9 +47,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 type Grid<'a> = [&'a str];
 
 fn is_part_number(start_x: usize, end_x: usize, y: usize, grid: &Grid) -> bool {
-    (start_x..=end_x).any(|x| {
-        neighbors(x, y, &grid).any(|(_x, _y, byte)| !byte.is_ascii_digit() && byte != b'.')
-    })
+    (start_x..=end_x)
+        .any(|x| neighbors(x, y, grid).any(|(.., byte)| !byte.is_ascii_digit() && byte != b'.'))
 }
 
 fn at(x: usize, y: usize, grid: &Grid) -> u8 {
