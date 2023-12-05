@@ -1,7 +1,5 @@
-use std::{error::Error, io};
-
-fn main() -> Result<(), Box<dyn Error>> {
-    let input = io::read_to_string(io::stdin())?;
+fn main() -> aoc::Result<()> {
+    let input = aoc::read_stdin()?;
     let ans_1: u32 = input.lines().filter_map(calibration_value).sum();
     let ans_2: u32 = input.lines().filter_map(calibration_value_p2).sum();
     println!("{ans_1} {ans_2}");

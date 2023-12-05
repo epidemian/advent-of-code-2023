@@ -1,9 +1,8 @@
-use std::{collections::HashSet, error::Error, io};
-
 use itertools::Itertools;
+use std::collections::HashSet;
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let input = io::read_to_string(io::stdin())?;
+fn main() -> aoc::Result<()> {
+    let input = aoc::read_stdin()?;
     let cards: Vec<_> = input.lines().map(parse_card).try_collect()?;
     let win_counts: Vec<_> = cards
         .iter()
@@ -29,7 +28,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_card(line: &str) -> Result<(HashSet<u32>, HashSet<u32>), Box<dyn Error>> {
+fn parse_card(line: &str) -> aoc::Result<(HashSet<u32>, HashSet<u32>)> {
     let (_, numbers_part) = line.split_once(": ").ok_or("malformed card line")?;
     let (left, right) = numbers_part
         .split_once(" | ")

@@ -1,8 +1,7 @@
 use itertools::Itertools;
-use std::{error::Error, io};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let input = io::read_to_string(io::stdin())?;
+fn main() -> aoc::Result<()> {
+    let input = aoc::read_stdin()?;
     let games: Vec<_> = input.lines().map(Game::parse).try_collect()?;
 
     let ans_1: u32 = games.iter().filter(|g| g.is_possible()).map(|g| g.id).sum();
@@ -17,7 +16,7 @@ struct Game {
 }
 
 impl Game {
-    fn parse(s: &str) -> Result<Game, Box<dyn Error>> {
+    fn parse(s: &str) -> aoc::Result<Game> {
         let (id_part, sets_part) = s.split_once(": ").ok_or("malformed game line")?;
         let id = id_part.strip_prefix("Game ").ok_or("malformed game line")?;
         let id = id.parse()?;
@@ -50,7 +49,7 @@ struct CubeSet {
 }
 
 impl CubeSet {
-    fn parse(s: &str) -> Result<CubeSet, Box<dyn Error>> {
+    fn parse(s: &str) -> aoc::Result<CubeSet> {
         let mut set = CubeSet::default();
         for cubes_str in s.split(", ") {
             let (n, color) = cubes_str

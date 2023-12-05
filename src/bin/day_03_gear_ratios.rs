@@ -1,11 +1,7 @@
-use std::{
-    collections::{HashMap, HashSet},
-    error::Error,
-    io,
-};
+use std::collections::{HashMap, HashSet};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let input = io::read_to_string(io::stdin())?;
+fn main() -> aoc::Result<()> {
+    let input = aoc::read_stdin()?;
     let grid: Vec<&str> = input.lines().collect();
     let number_spans = get_number_spans(&grid);
 
