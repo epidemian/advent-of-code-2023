@@ -3,28 +3,55 @@ use itertools::Itertools;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let (seeds, maps) = parse_input(&input)?;
-    let min_location = seeds
-        .iter()
-        .map(|seed| {
-            let mut num = *seed;
-            for map in maps.iter() {
-                num = map_number(num, map);
-            }
-            num
-        })
-        .min()
-        .unwrap_or(0);
-    println!("{min_location}");
+
+    let ans_1 = min_location_part_1(&seeds, &maps);
+    let ans_2 = min_location_part_2(&seeds, &maps);
+    println!("{ans_1} {ans_2}");
     Ok(())
 }
 
 type Map = Vec<RangeMap>;
 
-#[derive(Debug)]
 struct RangeMap {
     source_start: u64,
     destination_start: u64,
     length: u64,
+}
+
+fn min_location_part_1(seeds: &[u64], maps: &[Map]) -> u64 {
+    seeds
+        .iter()
+        .map(|seed| map_seed_to_location(*seed, maps))
+        .min()
+        .unwrap_or(0)
+}
+
+fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
+    seeds
+        .iter()
+        .tuples()
+        .flat_map(|(&start, &length)| {
+            (start..start + length).map(|seed| map_seed_to_location(seed, maps))
+        })
+        .min()
+        .unwrap_or(0)
+}
+
+fn map_seed_to_location(seed: u64, maps: &[Map]) -> u64 {
+    let mut num = seed;
+    for map in maps.iter() {
+        num = map_number(num, map);
+    }
+    num
+}
+
+fn map_number(num: u64, map: &Map) -> u64 {
+    for range in map.iter() {
+        if let Some(mapped_num) = range.try_map(num) {
+            return mapped_num;
+        }
+    }
+    num
 }
 
 impl RangeMap {
@@ -57,13 +84,4 @@ fn parse_input(input: &str) -> aoc::Result<(Vec<u64>, Vec<Map>)> {
 
 fn parse_map(block: &str) -> aoc::Result<Vec<RangeMap>> {
     block.lines().skip(1).map(RangeMap::parse).collect()
-}
-
-fn map_number(num: u64, map: &Map) -> u64 {
-    for range in map.iter() {
-        if let Some(mapped_num) = range.try_map(num) {
-            return mapped_num;
-        }
-    }
-    num
 }
