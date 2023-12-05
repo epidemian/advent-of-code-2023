@@ -65,3 +65,9 @@ A grid puzzle with some tricky parsing problems, as the numbers on the grid span
 ### Day 4: Scratchcards
 
 A simple and enjoyable Monday puzzle. Part 2 looked intimidating at first, but was relatively easy once given a little bit og thought :)
+
+### Day 5: If You Give A Seed A Fertilizer
+
+This one was a pretty straightforward part 1, but part 2 is too slow with the most naive approach of brute-forcing all the possible seed numbers. Luckily, Rust compiles to pretty efficient code, so even this brute-force solution was able to run in ~100 seconds on my machine :)
+
+The `Iterator::tuples()` method from `itertools` was quite helpful in easily pairing numbers for part 2.
