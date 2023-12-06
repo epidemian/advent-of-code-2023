@@ -1,5 +1,3 @@
-use std::collections::VecDeque;
-
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -29,10 +27,10 @@ fn min_location_part_1(seeds: &[u64], maps: &[Map]) -> u64 {
 }
 
 fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
-    let mut ranges: VecDeque<(u64, u64)> = seeds.iter().cloned().tuples().collect();
+    let mut ranges: Vec<(u64, u64)> = seeds.iter().cloned().tuples().collect();
     for map in maps.iter() {
-        let mut mapped_ranges = VecDeque::with_capacity(ranges.len());
-        while let Some((start, length)) = ranges.pop_front() {
+        let mut mapped_ranges = Vec::with_capacity(ranges.len());
+        while let Some((start, length)) = ranges.pop() {
             let (mut start, mut length) = (start, length);
             for range_map in map.iter() {
                 if start + length - 1 < range_map.source_start
@@ -45,27 +43,27 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
                 {
                     // (start, length) is entirely within range_map source range
                     let mapped_start = start - range_map.source_start + range_map.destination_start;
-                    mapped_ranges.push_back((mapped_start, length));
+                    mapped_ranges.push((mapped_start, length));
                     length = 0;
                     break;
                 }
                 if start < range_map.source_start
                     && range_map.source_start + range_map.length < start + length
                 {
-                    mapped_ranges.push_back((range_map.destination_start, range_map.length));
-                    ranges.push_back((
+                    mapped_ranges.push((range_map.destination_start, range_map.length));
+                    ranges.push((
                         range_map.source_start + range_map.length,
                         start + length - range_map.source_start - range_map.length,
                     ));
                     length = range_map.source_start - start;
                 } else if start < range_map.source_start {
-                    mapped_ranges.push_back((
+                    mapped_ranges.push((
                         range_map.destination_start,
                         length + start - range_map.source_start,
                     ));
                     length = range_map.source_start - start;
                 } else if start + length > range_map.source_start + range_map.length {
-                    mapped_ranges.push_back((
+                    mapped_ranges.push((
                         start - range_map.source_start + range_map.destination_start,
                         range_map.source_start + range_map.length - start,
                     ));
@@ -76,7 +74,7 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
                 }
             }
             if length != 0 {
-                mapped_ranges.push_back((start, length));
+                mapped_ranges.push((start, length));
             }
         }
         ranges = mapped_ranges;
