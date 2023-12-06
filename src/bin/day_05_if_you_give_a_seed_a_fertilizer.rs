@@ -12,10 +12,11 @@ fn main() -> aoc::Result<()> {
 
 type Map = Vec<RangeMap>;
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone)]
+// These are open-ended ranges, so Range::new(3, 6) covers 3, 4, and 5.
 struct Range {
     start: u64,
-    length: u64,
+    end: u64,
 }
 
 struct RangeMap {
@@ -33,7 +34,7 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
         .iter()
         .cloned()
         .tuples()
-        .map(|(start, length)| Range { start, length })
+        .map(|(start, length)| Range::new(start, start + length))
         .collect();
     for map in maps.iter() {
         let mut mapped_ranges = Vec::with_capacity(ranges.len());
@@ -49,7 +50,7 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
                 // Map the intersection.
                 mapped_ranges.push(Range::new(
                     intersection.start - range_map.src.start + range_map.dst_start,
-                    intersection.length,
+                    intersection.end - range_map.src.start + range_map.dst_start,
                 ));
 
                 // Put the rest of the unmapped range back into `ranges` to be mapped afterwards.
@@ -73,28 +74,17 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
 }
 
 impl Range {
-    fn new(start: u64, length: u64) -> Range {
-        Range { start, length }
-    }
-
-    fn end(&self) -> u64 {
-        self.start + self.length - 1
+    fn new(start: u64, end: u64) -> Range {
+        Range { start, end }
     }
 
     fn is_empty(&self) -> bool {
-        self.length == 0
+        self.end <= self.start
     }
 
-    // The intersection of two ranges might be empty in case they don't overlap.
+    // The intersection of two ranges A and B might be empty in case they don't overlap.
     fn intersection(&self, other: Range) -> Range {
-        let intersection_start = self.start.max(other.start);
-        let intersection_end = self.end().min(other.end());
-        let intersection_length = if intersection_start <= intersection_end {
-            intersection_end - intersection_start + 1
-        } else {
-            0
-        };
-        Range::new(intersection_start, intersection_length)
+        Range::new(self.start.max(other.start), self.end.min(other.end))
     }
 
     // Returns the difference between two ranges.
@@ -105,14 +95,8 @@ impl Range {
     // This method returns those two "left" and "right" resulting ranges, which might be empty in
     // the cases where the B range is not within the A range.
     fn difference(&self, other: Range) -> (Range, Range) {
-        let left_diff = Range::new(
-            self.start,
-            other.start.saturating_sub(self.start).min(self.length),
-        );
-        let right_diff = Range::new(
-            self.start.max(other.end() + 1),
-            self.end().saturating_sub(other.end()).min(self.length),
-        );
+        let left_diff = Range::new(self.start, self.end.min(other.start));
+        let right_diff = Range::new(self.start.max(other.end), self.end);
         (left_diff, right_diff)
     }
 }
@@ -121,7 +105,7 @@ impl RangeMap {
     fn parse(line: &str) -> aoc::Result<RangeMap> {
         let nums: Vec<_> = line.split(' ').map(str::parse).try_collect()?;
         let [dst_start, src_start, length] = nums[..].try_into()?;
-        let src = Range::new(src_start, length);
+        let src = Range::new(src_start, src_start + length);
         Ok(RangeMap { src, dst_start })
     }
 }
