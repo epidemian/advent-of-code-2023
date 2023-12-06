@@ -19,11 +19,8 @@ struct RangeMap {
 }
 
 fn min_location_part_1(seeds: &[u64], maps: &[Map]) -> u64 {
-    seeds
-        .iter()
-        .map(|seed| map_seed_to_location(*seed, maps))
-        .min()
-        .unwrap_or(0)
+    let flattened_ranges: Vec<_> = seeds.iter().flat_map(|seed| [*seed, 1]).collect();
+    min_location_part_2(&flattened_ranges, maps)
 }
 
 fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
@@ -82,23 +79,6 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
     ranges.iter().map(|(start, _l)| *start).min().unwrap_or(0)
 }
 
-fn map_seed_to_location(seed: u64, maps: &[Map]) -> u64 {
-    let mut num = seed;
-    for map in maps.iter() {
-        num = map_number(num, map);
-    }
-    num
-}
-
-fn map_number(num: u64, map: &Map) -> u64 {
-    for range in map.iter() {
-        if let Some(mapped_num) = range.try_map(num) {
-            return mapped_num;
-        }
-    }
-    num
-}
-
 impl RangeMap {
     fn parse(line: &str) -> aoc::Result<RangeMap> {
         let nums: Vec<_> = line.split(' ').map(str::parse).try_collect()?;
@@ -108,14 +88,6 @@ impl RangeMap {
             destination_start,
             length,
         })
-    }
-
-    fn try_map(&self, num: u64) -> Option<u64> {
-        if self.source_start <= num && num < self.source_start + self.length {
-            Some(num - self.source_start + self.destination_start)
-        } else {
-            None
-        }
     }
 }
 
