@@ -38,13 +38,13 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
     for map in maps.iter() {
         let mut mapped_ranges = Vec::with_capacity(ranges.len());
         while let Some(range) = ranges.pop() {
-            let mut did_intersect = false;
+            let mut intersects = false;
             for range_map in map.iter() {
                 let intersection = range.intersection(range_map.src);
                 if intersection.is_empty() {
                     continue;
                 }
-                // Ranges overlap.
+                intersects = true;
 
                 // Map the intersection.
                 mapped_ranges.push(Range::new(
@@ -52,36 +52,18 @@ fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
                     intersection.length,
                 ));
 
-                // TODO
-                // let diff = range.difference(intersection);
-
-                if range_map.src.start <= range.start
-                    && range.start + range.length <= range_map.src.start + range_map.src.length
-                {
-                    // range is entirely within range_map.src
-                } else if range.start < range_map.src.start
-                    && range_map.src.start + range_map.src.length < range.start + range.length
-                {
-                    ranges.push(Range::new(
-                        range_map.src.start + range_map.src.length,
-                        range.start + range.length - range_map.src.start - range_map.src.length,
-                    ));
-                    ranges.push(Range::new(range.start, range_map.src.start - range.start));
-                } else if range.start < range_map.src.start {
-                    ranges.push(Range::new(range.start, range_map.src.start - range.start));
-                } else if range.start + range.length > range_map.src.start + range_map.src.length {
-                    ranges.push(Range::new(
-                        range_map.src.start + range_map.src.length,
-                        range.start + range.length - range_map.src.start - range_map.src.length,
-                    ));
-                } else {
-                    unreachable!();
+                // Put the rest of the unmapped range back into `ranges` to be mapped afterwards.
+                let (left_diff, right_diff) = range.difference(intersection);
+                if !left_diff.is_empty() {
+                    ranges.push(left_diff)
+                }
+                if !right_diff.is_empty() {
+                    ranges.push(right_diff)
                 }
 
-                did_intersect = true;
                 break;
             }
-            if !did_intersect {
+            if !intersects {
                 mapped_ranges.push(range);
             }
         }
@@ -95,6 +77,15 @@ impl Range {
         Range { start, length }
     }
 
+    fn end(&self) -> u64 {
+        self.start + self.length - 1
+    }
+
+    fn is_empty(&self) -> bool {
+        self.length == 0
+    }
+
+    // The intersection of two ranges might be empty in case they don't overlap.
     fn intersection(&self, other: Range) -> Range {
         let intersection_start = self.start.max(other.start);
         let intersection_end = self.end().min(other.end());
@@ -106,12 +97,23 @@ impl Range {
         Range::new(intersection_start, intersection_length)
     }
 
-    fn end(&self) -> u64 {
-        self.start + self.length - 1
-    }
-
-    fn is_empty(&self) -> bool {
-        self.length == 0
+    // Returns the difference between two ranges.
+    // When subtracting a range B from a range A, the result can be up to two ranges, like this:
+    // A:   |--------|
+    // B:      |-|
+    // A-B: |-|   |--|
+    // This method returns those two "left" and "right" resulting ranges, which might be empty in
+    // the cases where the B range is not within the A range.
+    fn difference(&self, other: Range) -> (Range, Range) {
+        let left_diff = Range::new(
+            self.start,
+            other.start.saturating_sub(self.start).min(self.length),
+        );
+        let right_diff = Range::new(
+            self.start.max(other.end() + 1),
+            self.end().saturating_sub(other.end()).min(self.length),
+        );
+        (left_diff, right_diff)
     }
 }
 
