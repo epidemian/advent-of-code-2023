@@ -12,10 +12,15 @@ fn main() -> aoc::Result<()> {
 
 type Map = Vec<RangeMap>;
 
-struct RangeMap {
-    source_start: u64,
-    destination_start: u64,
+#[derive(Copy, Clone, Debug)]
+struct Range {
+    start: u64,
     length: u64,
+}
+
+struct RangeMap {
+    src: Range,
+    dst_start: u64,
 }
 
 fn min_location_part_1(seeds: &[u64], maps: &[Map]) -> u64 {
@@ -24,70 +29,98 @@ fn min_location_part_1(seeds: &[u64], maps: &[Map]) -> u64 {
 }
 
 fn min_location_part_2(seeds: &[u64], maps: &[Map]) -> u64 {
-    let mut ranges: Vec<(u64, u64)> = seeds.iter().cloned().tuples().collect();
+    let mut ranges: Vec<Range> = seeds
+        .iter()
+        .cloned()
+        .tuples()
+        .map(|(start, length)| Range { start, length })
+        .collect();
     for map in maps.iter() {
         let mut mapped_ranges = Vec::with_capacity(ranges.len());
-        while let Some((start, length)) = ranges.pop() {
-            let (mut start, mut length) = (start, length);
+        while let Some(range) = ranges.pop() {
+            let mut did_intersect = false;
             for range_map in map.iter() {
-                if start + length - 1 < range_map.source_start
-                    || start > range_map.source_start + range_map.length - 1
-                {
-                    // Ranges don't overlap
+                let intersection = range.intersection(range_map.src);
+                if intersection.is_empty() {
                     continue;
-                } else if range_map.source_start <= start
-                    && start + length <= range_map.source_start + range_map.length
-                {
-                    // (start, length) is entirely within range_map source range
-                    let mapped_start = start - range_map.source_start + range_map.destination_start;
-                    mapped_ranges.push((mapped_start, length));
-                    length = 0;
-                    break;
                 }
-                if start < range_map.source_start
-                    && range_map.source_start + range_map.length < start + length
+                // Ranges overlap.
+
+                // Map the intersection.
+                mapped_ranges.push(Range::new(
+                    intersection.start - range_map.src.start + range_map.dst_start,
+                    intersection.length,
+                ));
+
+                // TODO
+                // let diff = range.difference(intersection);
+
+                if range_map.src.start <= range.start
+                    && range.start + range.length <= range_map.src.start + range_map.src.length
                 {
-                    mapped_ranges.push((range_map.destination_start, range_map.length));
-                    ranges.push((
-                        range_map.source_start + range_map.length,
-                        start + length - range_map.source_start - range_map.length,
+                    // range is entirely within range_map.src
+                } else if range.start < range_map.src.start
+                    && range_map.src.start + range_map.src.length < range.start + range.length
+                {
+                    ranges.push(Range::new(
+                        range_map.src.start + range_map.src.length,
+                        range.start + range.length - range_map.src.start - range_map.src.length,
                     ));
-                    length = range_map.source_start - start;
-                } else if start < range_map.source_start {
-                    mapped_ranges.push((
-                        range_map.destination_start,
-                        length + start - range_map.source_start,
+                    ranges.push(Range::new(range.start, range_map.src.start - range.start));
+                } else if range.start < range_map.src.start {
+                    ranges.push(Range::new(range.start, range_map.src.start - range.start));
+                } else if range.start + range.length > range_map.src.start + range_map.src.length {
+                    ranges.push(Range::new(
+                        range_map.src.start + range_map.src.length,
+                        range.start + range.length - range_map.src.start - range_map.src.length,
                     ));
-                    length = range_map.source_start - start;
-                } else if start + length > range_map.source_start + range_map.length {
-                    mapped_ranges.push((
-                        start - range_map.source_start + range_map.destination_start,
-                        range_map.source_start + range_map.length - start,
-                    ));
-                    length = start + length - range_map.source_start - range_map.length;
-                    start = range_map.source_start + range_map.length;
                 } else {
                     unreachable!();
                 }
+
+                did_intersect = true;
+                break;
             }
-            if length != 0 {
-                mapped_ranges.push((start, length));
+            if !did_intersect {
+                mapped_ranges.push(range);
             }
         }
         ranges = mapped_ranges;
     }
-    ranges.iter().map(|(start, _l)| *start).min().unwrap_or(0)
+    ranges.iter().map(|r| r.start).min().unwrap_or(0)
+}
+
+impl Range {
+    fn new(start: u64, length: u64) -> Range {
+        Range { start, length }
+    }
+
+    fn intersection(&self, other: Range) -> Range {
+        let intersection_start = self.start.max(other.start);
+        let intersection_end = self.end().min(other.end());
+        let intersection_length = if intersection_start <= intersection_end {
+            intersection_end - intersection_start + 1
+        } else {
+            0
+        };
+        Range::new(intersection_start, intersection_length)
+    }
+
+    fn end(&self) -> u64 {
+        self.start + self.length - 1
+    }
+
+    fn is_empty(&self) -> bool {
+        self.length == 0
+    }
 }
 
 impl RangeMap {
     fn parse(line: &str) -> aoc::Result<RangeMap> {
         let nums: Vec<_> = line.split(' ').map(str::parse).try_collect()?;
-        let [destination_start, source_start, length] = nums[..].try_into()?;
-        Ok(RangeMap {
-            source_start,
-            destination_start,
-            length,
-        })
+        let [dst_start, src_start, length] = nums[..].try_into()?;
+        let src = Range::new(src_start, length);
+        Ok(RangeMap { src, dst_start })
     }
 }
 
