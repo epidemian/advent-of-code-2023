@@ -26,6 +26,8 @@ fn main() -> aoc::Result<()> {
 }
 
 fn ways_to_beat_record(race_time: u64, record_dist: u64) -> usize {
+    // Note: this is doing a linear algorithm when it could use some sort of binary search to find
+    // the lowest and highest button-holding times that beats record, and return their difference.
     (0..race_time)
         .filter(|hold_time| {
             let dist = hold_time * (race_time - hold_time);

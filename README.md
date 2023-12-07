@@ -78,3 +78,7 @@ Ignoring the pain, i think i've learned some important lessons regarding these k
 
 - Modeling abstract math operations like intersection and diff pays off *really* quickly. And the logic of these operations isn't even that involved!
 - Using open-ended [start, end) ranges is better than start+length pairs. Way less fiddling with numbers and off-by-one errors.
+
+### Day 6: Wait For It
+
+A very simple puzzle that could be solved by brute force and still run fast enough. My input required to check ~50M numbers, just takes like ~5ms on my machine, so no need to find a better algorithm. Thanks again, Rust! :)
