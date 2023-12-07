@@ -80,20 +80,11 @@ fn neighbors<'a>(
     y: usize,
     grid: &'a Grid,
 ) -> impl Iterator<Item = (usize, usize, u8)> + 'a {
-    [
-        (-1, -1),
-        (-1, 0),
-        (-1, 1),
-        (0, -1),
-        (0, 1),
-        (1, -1),
-        (1, 0),
-        (1, 1),
-    ]
-    .into_iter()
-    .filter_map(move |(dx, dy)| {
-        let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-        let byte = *grid.get(ny)?.as_bytes().get(nx)?;
-        Some((nx, ny, byte))
-    })
+    (-1..=1)
+        .flat_map(|dx| (-1..=1).map(move |dy| (dx, dy)))
+        .filter_map(move |(dx, dy)| {
+            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
+            let byte = *grid.get(ny)?.as_bytes().get(nx)?;
+            Some((nx, ny, byte))
+        })
 }
