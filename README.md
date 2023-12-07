@@ -71,3 +71,10 @@ A simple and enjoyable Monday puzzle. Part 2 looked intimidating at first, but w
 This one was a pretty straightforward part 1, but part 2 is too slow with the most naive approach of brute-forcing all the possible seed numbers. Luckily, Rust compiles to pretty efficient code, so even this brute-force solution was able to run in ~100 seconds on my machine :)
 
 The `Iterator::tuples()` method from `itertools` was quite helpful in easily pairing numbers for part 2.
+
+Update: after quite a bit of hacking, i managed to implement a non-brute-forcey solution based on interval math logic. This was a PITA; it took 2hs of hacking at vey questionable logic to to a working solution that yields the same answer. But it paid off: now the code runs in ~2ms instead of ~100s :D
+
+Ignoring the pain, i think i've learned some important lessons regarding these kind of interval logic puzzles:
+
+- Modeling abstract math operations like intersection and diff pays off *really* quickly. And the logic of these operations isn't even that involved!
+- Using open-ended [start, end) ranges is better than start+length pairs. Way less fiddling with numbers and off-by-one errors.
