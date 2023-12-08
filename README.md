@@ -82,3 +82,9 @@ Ignoring the pain, i think i've learned some important lessons regarding these k
 ### Day 6: Wait For It
 
 A very simple puzzle that could be solved by brute force and still run fast enough. My input required to check ~50M numbers, just takes like ~5ms on my machine, so no need to find a better algorithm. Thanks again, Rust! :)
+
+### Day 7: Camel Cards
+
+Nice domain-modeling puzzle. Part 2 was a neat twist to rethink some assumptions.
+
+Learned the trick of using `.zip(1..)` instead of `.enumerate()` to enumerate things starting from 1.

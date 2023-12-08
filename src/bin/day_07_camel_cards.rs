@@ -18,8 +18,8 @@ fn main() -> aoc::Result<()> {
 fn total_winnings(hands: &[(Hand, u64)]) -> u64 {
     hands
         .iter()
-        .enumerate()
-        .map(|(i, &(_hand, bid))| bid * (i + 1) as u64)
+        .zip(1..)
+        .map(|(&(_hand, bid), i)| bid * i)
         .sum()
 }
 
@@ -72,10 +72,10 @@ impl Hand {
     fn hand_type_with_jokers(&self) -> HandType {
         let counts = self.cards.into_iter().filter(|c| *c != 'J').counts();
         let highest_count_card = counts
-            .iter()
-            .max_by_key(|(_card, count)| **count)
-            .map(|(card, _count)| *card)
-            // If hand consists of just jokers, replace them with a valid label, like aces.
+            .into_iter()
+            .max_by_key(|(_card, count)| *count)
+            .map(|(card, _count)| card)
+            // If hand is all jokers, replace them with a valid label, like aces.
             .unwrap_or('A');
         let hand_with_jokers_replaced = Hand {
             cards: self
