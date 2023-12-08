@@ -1,14 +1,14 @@
 use itertools::Itertools;
-use std::cmp::Ordering;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let mut hands: Vec<_> = input.lines().map(parse_line).try_collect()?;
 
+    let mut hands: Vec<_> = input.lines().map(|l| parse_line(l, false)).try_collect()?;
     hands.sort_by_key(|(hand, _bid)| *hand);
     let ans_1 = total_winnings(&hands);
 
-    hands.sort_by(|a, b| a.0.cmp_with_jokers(&b.0));
+    let mut hands: Vec<_> = input.lines().map(|l| parse_line(l, true)).try_collect()?;
+    hands.sort_by_key(|(hand, _bid)| *hand);
     let ans_2 = total_winnings(&hands);
 
     println!("{ans_1} {ans_2}");
@@ -23,12 +23,13 @@ fn total_winnings(hands: &[(Hand, u64)]) -> u64 {
         .sum()
 }
 
-#[derive(Eq, PartialEq, Clone, Copy)]
+#[derive(Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
 struct Hand {
-    cards: [char; 5],
+    hand_type: HandType,
+    cards: [Card; 5],
 }
 
-#[derive(Ord, Eq, PartialEq, PartialOrd)]
+#[derive(Ord, Eq, PartialEq, PartialOrd, Copy, Clone)]
 enum HandType {
     HighCard,
     OnePair,
@@ -39,23 +40,48 @@ enum HandType {
     FiveOfAKind,
 }
 
-impl Ord for Hand {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.hand_type()
-            .cmp(&other.hand_type())
-            .then_with(|| self.cards.map(card_value).cmp(&other.cards.map(card_value)))
-    }
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
+enum Card {
+    Joker,
+    Number(u32),
+    Jack,
+    Queen,
+    King,
+    Ace,
 }
+use Card::*;
 
-impl PartialOrd for Hand {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
+impl Card {
+    fn parse(ch: char, js_as_jokers: bool) -> aoc::Result<Card> {
+        Ok(match ch {
+            'A' => Ace,
+            'K' => King,
+            'Q' => Queen,
+            'J' if js_as_jokers => Joker,
+            'J' => Jack,
+            '2'..='9' => Number(ch as u32 - '0' as u32),
+            'T' => Number(10),
+            _ => Err(format!("invalid character '{ch}'"))?,
+        })
     }
 }
 
 impl Hand {
-    fn hand_type(&self) -> HandType {
-        let mut counts: Vec<_> = self.cards.into_iter().counts().into_values().collect();
+    fn new(cards: [Card; 5]) -> Hand {
+        Hand {
+            hand_type: Hand::hand_type(cards),
+            cards,
+        }
+    }
+
+    fn hand_type(cards: [Card; 5]) -> HandType {
+        let cards = if cards.contains(&Joker) {
+            Hand::replace_jokers_for_strongest_hand_type(cards)
+        } else {
+            cards
+        };
+
+        let mut counts: Vec<_> = cards.into_iter().counts().into_values().collect();
         counts.sort();
         match counts[..] {
             [5] => HandType::FiveOfAKind,
@@ -69,56 +95,24 @@ impl Hand {
         }
     }
 
-    fn hand_type_with_jokers(&self) -> HandType {
-        let counts = self.cards.into_iter().filter(|c| *c != 'J').counts();
+    fn replace_jokers_for_strongest_hand_type(cards: [Card; 5]) -> [Card; 5] {
+        let counts = cards.into_iter().filter(|c| *c != Joker).counts();
         let highest_count_card = counts
             .into_iter()
             .max_by_key(|(_card, count)| *count)
             .map(|(card, _count)| card)
-            // If hand is all jokers, replace them with a valid label, like aces.
-            .unwrap_or('A');
-        let hand_with_jokers_replaced = Hand {
-            cards: self
-                .cards
-                .map(|c| if c == 'J' { highest_count_card } else { c }),
-        };
-        hand_with_jokers_replaced.hand_type()
-    }
-
-    fn cmp_with_jokers(&self, other: &Hand) -> Ordering {
-        self.hand_type_with_jokers()
-            .cmp(&other.hand_type_with_jokers())
-            .then_with(|| {
-                self.cards
-                    .map(card_value_with_jokers)
-                    .cmp(&other.cards.map(card_value_with_jokers))
-            })
+            // If cards are all jokers, replace them with a valid card, like aces.
+            .unwrap_or(Ace);
+        cards.map(|c| if c == Joker { highest_count_card } else { c })
     }
 }
 
-fn card_value(card_label: char) -> usize {
-    [
-        '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A',
-    ]
-    .into_iter()
-    .position(|l| l == card_label)
-    .unwrap_or(0)
-}
-
-fn card_value_with_jokers(card_label: char) -> usize {
-    [
-        'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A',
-    ]
-    .into_iter()
-    .position(|l| l == card_label)
-    .unwrap_or(0)
-}
-
-fn parse_line(line: &str) -> aoc::Result<(Hand, u64)> {
+fn parse_line(line: &str, js_as_jokers: bool) -> aoc::Result<(Hand, u64)> {
     let (hand, bid) = line.split_once(' ').ok_or("invalid input")?;
-    let cards: Vec<_> = hand.chars().collect();
-    let hand = Hand {
-        cards: cards[..].try_into()?,
-    };
+    let cards: Vec<_> = hand
+        .chars()
+        .map(|ch| Card::parse(ch, js_as_jokers))
+        .try_collect()?;
+    let hand = Hand::new(cards[..].try_into()?);
     Ok((hand, bid.parse()?))
 }
