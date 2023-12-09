@@ -2,6 +2,8 @@
 
 My solutions for [2023's Advent of Code](https://adventofcode.com/2023).
 
+Daily solutions' code in in the [`src/bin`](src/bin) directory.
+
 ## Goals
 
 - Have fun & learn things
