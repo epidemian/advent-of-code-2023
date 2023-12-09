@@ -16,11 +16,7 @@ fn main() -> aoc::Result<()> {
 }
 
 fn total_winnings(hands: &[(Hand, u64)]) -> u64 {
-    hands
-        .iter()
-        .zip(1..)
-        .map(|(&(_hand, bid), i)| bid * i)
-        .sum()
+    hands.iter().zip(1..).map(|(&(_, bid), i)| bid * i).sum()
 }
 
 #[derive(Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]

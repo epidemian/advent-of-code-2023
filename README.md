@@ -88,3 +88,8 @@ A very simple puzzle that could be solved by brute force and still run fast enou
 Nice domain-modeling puzzle. Part 2 was a neat twist to rethink some assumptions.
 
 Learned the trick of using `.zip(1..)` instead of `.enumerate()` to enumerate things starting from 1.
+
+Once again, i discover that implementing a custom `Ord` is not the most trivial thing. And learned a couple of lessons regarding ordering:
+
+- Prefer using tuples of things as order keys, instead of custom `self.foo.cmp(&other.foo).then_with(|| ...)` chains. Tuples or arrays already implement lexicographic order.
+- If possible, prefer deriving all ordering logic using `#[derive(Ord, PartialOrd)]`. Enums can be trivially ordered, and structs get lexicographically ordered by their fields.
