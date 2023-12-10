@@ -58,19 +58,18 @@ fn count_steps_multiple_starts(instructions: &str, nodes: &Graph) -> aoc::Result
     Ok(combined_count)
 }
 
-fn gcd(mut a: u64, mut b: u64) -> u64 {
-    while b != 0 {
-        (a, b) = (b, a % b);
+fn gcd(a: u64, b: u64) -> u64 {
+    if b == 0 {
+        return a;
     }
-    a
+    gcd(b, a % b)
 }
 
 fn lcm(a: u64, b: u64) -> u64 {
     if a == 0 || b == 0 {
-        0
-    } else {
-        (a * b) / gcd(a, b)
+        return 0;
     }
+    (a * b) / gcd(a, b)
 }
 
 fn parse_node(s: &str) -> aoc::Result<(&str, (&str, &str))> {
