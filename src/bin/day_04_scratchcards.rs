@@ -10,10 +10,7 @@ fn main() -> aoc::Result<()> {
         .collect();
 
     // Part 1
-    let total_points: u32 = win_counts
-        .iter()
-        .map(|&count| if count == 0 { 0 } else { 1 << (count - 1) })
-        .sum();
+    let total_points: u32 = win_counts.iter().map(|&count| 1 << count >> 1).sum();
 
     // Part 2
     let mut card_copies = vec![1; win_counts.len()];
