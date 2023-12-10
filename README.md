@@ -4,6 +4,8 @@ My solutions for [2023's Advent of Code](https://adventofcode.com/2023).
 
 Daily solutions' code in in the [`src/bin`](src/bin) directory.
 
+I recorded my solves on [this YouTube playlist](https://www.youtube.com/playlist?list=PL3kymB6hDjyVK6P1j7TgqxmOtjxXmzbFc).
+
 ## Goals
 
 - Have fun & learn things
@@ -95,3 +97,16 @@ Once again, i discover that implementing a custom `Ord` is not the most trivial 
 
 - Prefer using tuples of things as order keys, instead of custom `self.foo.cmp(&other.foo).then_with(|| ...)` chains. Tuples or arrays already implement lexicographic order.
 - If possible, prefer deriving all ordering logic using `#[derive(Ord, PartialOrd)]`. Enums can be trivially ordered, and structs get lexicographically ordered by their fields.
+
+
+### Day 8: Haunted Wasteland
+
+Trivial part 1 and quite tricky part 2. It didn't take me so long, but i stumbled upon the answer by chance really: it seemed that it was *somewhere* along the lines of counting loops through the node network and then doing some least common multiple of the times it took each ghost to reach an end. But i didn't expect to be just that! If you watch [the recording](https://youtu.be/UdNuH2UJzNs) for that day, you can see me getting both answers in ~1 hour and then spending another whole hour trying to figure out *why* the second answer was right.
+
+### Day 9: Mirage Maintenance
+
+Super nice and simple "mathematical" puzzle. A recursive solution worked wonderfully :chef-kiss:
+
+Although, i learned that Rust's `Result` propagation does not provide an easy way of printing the stack trace by default. Not even the line location of the original error :(
+
+There are some proposals to make error handling more ergonomic. See: https://github.com/rust-lang/rust/issues/53487
