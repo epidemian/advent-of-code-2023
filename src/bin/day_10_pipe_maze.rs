@@ -2,7 +2,7 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid: Grid = input.lines().map(|line| line.chars().collect()).collect();
+    let grid: Grid = input.lines().map(|l| l.chars().collect()).collect();
 
     let half_pipe_length = measure_pipe_loop(&grid)? / 2;
     let enclosed_count = count_enclosed_tiles(&grid)?;
@@ -93,7 +93,7 @@ enum FloodFillTile {
 use FloodFillTile::*;
 
 fn count_enclosed_tiles(grid: &Grid) -> aoc::Result<u32> {
-    let mut expanded_grid = expand_grid(grid)?;
+    let mut expanded_grid = expand_grid(grid);
     flood_fill(&mut expanded_grid);
 
     let mut enclosed_count = 0;
@@ -108,26 +108,26 @@ fn count_enclosed_tiles(grid: &Grid) -> aoc::Result<u32> {
     Ok(enclosed_count)
 }
 
-fn expand_grid(grid: &Grid) -> aoc::Result<FloodFillGrid> {
+fn expand_grid(grid: &Grid) -> FloodFillGrid {
     let height = grid.len();
     let width = grid[0].len();
     let mut expanded_grid = vec![vec![Empty; width * 3]; height * 3];
     for (y, row) in grid.iter().enumerate() {
         for (x, ch) in row.iter().enumerate() {
-            let expanded_tile = expand_tile(ch)?;
+            let expanded_tile = expand_tile(ch);
             for (tx, ty) in (0..3).cartesian_product(0..3) {
                 expanded_grid[y * 3 + ty][x * 3 + tx] = expanded_tile[ty][tx];
             }
         }
     }
-    Ok(expanded_grid)
+    expanded_grid
 }
 
-fn expand_tile(ch: &char) -> aoc::Result<[[FloodFillTile; 3]; 3]> {
+fn expand_tile(ch: &char) -> [[FloodFillTile; 3]; 3] {
     #[allow(non_snake_case)]
     let W = Wall;
     let e = Empty;
-    Ok(match *ch {
+    match *ch {
         '|' => [
             [e, W, e], //
             [e, W, e],
@@ -158,18 +158,17 @@ fn expand_tile(ch: &char) -> aoc::Result<[[FloodFillTile; 3]; 3]> {
             [e, W, W],
             [e, W, e],
         ],
-        '.' => [
-            [e, e, e], //
-            [e, e, e],
-            [e, e, e],
-        ],
         'S' => [
             [e, W, e], // Leave some gaps in the corner so the flood-fill can get in.
             [W, W, W],
             [e, W, e],
         ],
-        _ => Err(format!("unexpected character {ch}"))?,
-    })
+        _ => [
+            [e, e, e], //
+            [e, e, e],
+            [e, e, e],
+        ],
+    }
 }
 
 fn flood_fill(expanded_grid: &mut FloodFillGrid) {
