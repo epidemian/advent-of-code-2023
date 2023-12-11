@@ -5,7 +5,7 @@ fn main() -> aoc::Result<()> {
     let grid: Grid = input.lines().map(|l| l.chars().collect()).collect();
 
     let half_pipe_length = measure_pipe_loop(&grid)? / 2;
-    let enclosed_count = count_enclosed_tiles(&grid)?;
+    let enclosed_count = count_enclosed_tiles(&grid);
 
     println!("{half_pipe_length} {enclosed_count}");
     Ok(())
@@ -56,14 +56,10 @@ fn try_move(pos: Point, dir: Dir, grid: &Grid) -> Option<(Point, Dir)> {
     let new_dir = match (dir, ch) {
         (Left | Right, '-') => dir,
         (Up | Down, '|') => dir,
-        (Up, '7') => Left,
-        (Up, 'F') => Right,
-        (Right, 'J') => Up,
-        (Right, '7') => Down,
-        (Down, 'J') => Left,
-        (Down, 'L') => Right,
-        (Left, 'L') => Up,
-        (Left, 'F') => Down,
+        (Up, '7') | (Down, 'J') => Left,
+        (Up, 'F') | (Down, 'L') => Right,
+        (Left, 'L') | (Right, 'J') => Up,
+        (Left, 'F') | (Right, '7') => Down,
         (_, 'S') => dir,
         _ => return None,
     };
@@ -92,7 +88,11 @@ enum FloodFillTile {
 }
 use FloodFillTile::*;
 
-fn count_enclosed_tiles(grid: &Grid) -> aoc::Result<u32> {
+// This solution to part 2 assumes that there are no other loops of pipe on the grid besides giant
+// giant one. And that there's no 'J' or 'S' on the top left corner of the grid, which would mess up
+// the flood-filling starting there. If these assumptions would not hold, we'd need to clean up the
+// grid of all the junk pipes outside the giant loop before doing the flood-fill.
+fn count_enclosed_tiles(grid: &Grid) -> u32 {
     let mut expanded_grid = expand_grid(grid);
     flood_fill(&mut expanded_grid);
 
@@ -105,7 +105,7 @@ fn count_enclosed_tiles(grid: &Grid) -> aoc::Result<u32> {
             enclosed_count += is_enclosed as u32;
         }
     }
-    Ok(enclosed_count)
+    enclosed_count
 }
 
 fn expand_grid(grid: &Grid) -> FloodFillGrid {
@@ -174,9 +174,6 @@ fn expand_tile(ch: &char) -> [[FloodFillTile; 3]; 3] {
 fn flood_fill(expanded_grid: &mut FloodFillGrid) {
     let mut unvisited = vec![(0, 0)];
     while let Some((x, y)) = unvisited.pop() {
-        if expanded_grid[y][x] != Empty {
-            continue;
-        }
         expanded_grid[y][x] = Filled;
         let neighbors = [
             (x, y.wrapping_sub(1)),
