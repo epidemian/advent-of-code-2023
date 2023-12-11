@@ -79,22 +79,29 @@ impl Range {
         self.end <= self.start
     }
 
-    // The intersection of two ranges A and B might be empty in case they don't overlap.
+    /// The intersection between two ranges A and B, which looks like:
+    ///
+    ///     A:   [------)
+    ///     B:       [-----)
+    ///     A∩B:     [--)
+    ///
+    /// It can be empty in case the ranges don't overlap.
     fn intersection(&self, other: Range) -> Range {
         Range::new(self.start.max(other.start), self.end.min(other.end))
     }
 
-    // Returns the difference between two ranges.
-    // When subtracting a range B from a range A, the result can be up to two ranges, like this:
-    // A:   |--------|
-    // B:      |-|
-    // A-B: |-|   |--|
-    // This method returns those two "left" and "right" resulting ranges, which might be empty in
-    // the cases where the B range is not within the A range.
+    /// The difference between two ranges, A - B, can be up to two new ranges, like this:
+    ///
+    ///     A:   [--------)
+    ///     B:      [---)
+    ///     A-B: [--)   [-)
+    ///
+    /// This method returns those two "left" and "right" resulting ranges, which might be empty
+    /// depending on how A and B intersect.
     fn difference(&self, other: Range) -> (Range, Range) {
-        let left_diff = Range::new(self.start, self.end.min(other.start));
-        let right_diff = Range::new(self.start.max(other.end), self.end);
-        (left_diff, right_diff)
+        let left = Range::new(self.start, self.end.min(other.start));
+        let right = Range::new(self.start.max(other.end), self.end);
+        (left, right)
     }
 }
 
