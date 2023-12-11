@@ -110,3 +110,26 @@ Super nice and simple "mathematical" puzzle. A recursive solution worked wonderf
 Although, i learned that Rust's `Result` propagation does not provide an easy way of printing the stack trace by default. Not even the line location of the original error :(
 
 There are some proposals to make error handling more ergonomic. See: https://github.com/rust-lang/rust/issues/53487
+
+### Day 10: Pipe Maze
+
+Super challenging puzzle. Part 1 was relatively straightforward, but part 2... damn.
+
+I couldn't come up with a clever and nice solution for part 2, so what i did was to "expand" the original grid threefold, converting each pipe tile into a 3x3 drawing of that pipe on the expanded grid. For example, the 4 tiles `L-7|` would get expanded to:
+
+
+```
+.#........#.
+.#######..#.
+.......#..#.
+```
+
+This allowed two pipes that seemed to be originally "touching", like the `7|` above, to have some actual space between them in the expanded grid.
+
+Then i flood-filled this expanded grid starting from the outside, so only the space inside the giant pipe loop does not get filled. And then it's easy to know which original tiles are inside the giant loop.
+
+The "advantage" of this approach is that parts 1 and 2 are very independent. None of the pipe-walking logic from part 1 is relevant for part 2. And none of the part 2 flood-filling logic is relevant for part 1 either.
+
+The disadvantage of course i that i couldn't reuse any common code between the two parts, and this felt like two completely unrelated puzzles.
+
+After arriving to this eclectic solution, i went browsing on the AoC subreddit to see how other people have solved this, and i found out about a much more clever and elegant approach: scanning each row (or column) and counting how many piles belonging to the loop you go through. If you have passed an odd number of pipes, you're inside the loop, so any tile not belonging to the loop is inside it. It's much simpler, and of course much more tightly connected to part 1. Oh well! 🙃
