@@ -14,7 +14,7 @@ fn main() -> aoc::Result<()> {
         (pos, dir) = try_move(pos, dir, &grid)
             .ok_or_else(|| format!("invalid turn, going {dir:?} from {pos:?}"))?;
         count += 1;
-        if at(pos, &grid) == Some('S') {
+        if pos == start_pos {
             break;
         }
     }
