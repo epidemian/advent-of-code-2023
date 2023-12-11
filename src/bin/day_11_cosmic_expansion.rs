@@ -2,54 +2,60 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let mut grid = input
+    let image = input
         .lines()
         .map(|l| l.chars().map(|ch| ch == '#').collect())
         .collect();
-    expand_universe(&mut grid);
 
-    let distance_sum: usize = galaxy_positions(&grid)
-        .into_iter()
-        .tuple_combinations()
-        .map(|((x1, y1), (x2, y2))| x1.abs_diff(x2) + y1.abs_diff(y2))
-        .sum();
-
-    println!("{distance_sum}");
-
+    let ans_1 = galaxy_distances_sum(&image, 2);
+    let ans_2 = galaxy_distances_sum(&image, 1_000_000);
+    println!("{ans_1} {ans_2}");
     Ok(())
 }
 
-type Grid = Vec<Vec<bool>>;
+type Image = Vec<Vec<bool>>;
 
-fn expand_universe(grid: &mut Grid) {
-    let height = grid.len();
-    let width = grid[0].len();
+fn galaxy_distances_sum(image: &Image, expansion_factor: u64) -> u64 {
+    let mut galaxies = find_galaxies(image);
+    expand_universe(&mut galaxies, image, expansion_factor);
+    galaxies
+        .into_iter()
+        .tuple_combinations()
+        .map(|((x1, y1), (x2, y2))| x1.abs_diff(x2) + y1.abs_diff(y2))
+        .sum()
+}
 
-    for y in (0..height).rev() {
-        let row_is_empty = !grid[y].iter().contains(&true);
+fn expand_universe(galaxies: &mut [(u64, u64)], image: &Image, expansion_factor: u64) {
+    let height = image.len();
+    let width = image[0].len();
+
+    for row in (0..height).rev() {
+        let row_is_empty = !image[row].iter().contains(&true);
         if row_is_empty {
-            grid.insert(y, vec![false; width]);
+            for (_, y) in galaxies.iter_mut().filter(|(_, y)| *y > row as u64) {
+                *y += expansion_factor - 1;
+            }
         }
     }
 
-    for x in (0..width).rev() {
-        let col_is_empty = !grid.iter().map(|row| row[x]).contains(&true);
+    for col in (0..width).rev() {
+        let col_is_empty = !image.iter().map(|row| row[col]).contains(&true);
         if col_is_empty {
-            for row in grid.iter_mut() {
-                row.insert(x, false);
+            for (x, _) in galaxies.iter_mut().filter(|(x, _)| *x > col as u64) {
+                *x += expansion_factor - 1;
             }
         }
     }
 }
 
-fn galaxy_positions(grid: &Grid) -> Vec<(usize, usize)> {
+fn find_galaxies(grid: &Image) -> Vec<(u64, u64)> {
     grid.iter()
-        .enumerate()
-        .flat_map(|(y, row)| {
+        .zip(0..)
+        .flat_map(|(row, y)| {
             row.iter()
-                .enumerate()
-                .filter(|(_x, tile)| **tile)
-                .map(move |(x, _t)| (x, y))
+                .zip(0..)
+                .filter(|(tile, _x)| **tile)
+                .map(move |(_t, x)| (x, y))
         })
         .collect()
 }
