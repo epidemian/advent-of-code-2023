@@ -133,3 +133,9 @@ The "advantage" of this approach is that parts 1 and 2 are very independent. Non
 The disadvantage of course i that i couldn't reuse any common code between the two parts, and this felt like two completely unrelated puzzles.
 
 After arriving to this eclectic solution, i went browsing on the AoC subreddit to see how other people have solved this, and i found out about a much more clever and elegant approach: scanning each row (or column) and counting how many piles belonging to the loop you go through. If you have passed an odd number of pipes, you're inside the loop, so any tile not belonging to the loop is inside it. It's much simpler, and of course much more tightly connected to part 1. Oh well! 🙃
+
+### Day 11: Cosmic Expansion
+
+Neat puzzle. Part 2 was a nice twist that invalidated my 2D-grid expansion solution for part 1, but it turned out to be be quite simple to implement with similar logic, but acting on the galaxies' positions instead of on the grid itself.
+
+`Iterator::tuple_combinations()` from `itertools` was perfect for easily pairing up all galaxies :)

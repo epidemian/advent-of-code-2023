@@ -16,8 +16,7 @@ fn main() -> aoc::Result<()> {
 type Image = Vec<Vec<bool>>;
 
 fn galaxy_distances_sum(image: &Image, expansion_factor: u64) -> u64 {
-    let galaxies = galaxy_positions_after_expansion(image, expansion_factor);
-    galaxies
+    galaxy_positions_after_expansion(image, expansion_factor)
         .into_iter()
         .tuple_combinations()
         .map(|((x1, y1), (x2, y2))| x1.abs_diff(x2) + y1.abs_diff(y2))
