@@ -114,7 +114,7 @@ fn expand_grid(grid: &Grid) -> FloodFillGrid {
     let mut expanded_grid = vec![vec![Empty; width * 3]; height * 3];
     for (y, row) in grid.iter().enumerate() {
         for (x, ch) in row.iter().enumerate() {
-            let expanded_tile = expand_tile(ch);
+            let expanded_tile = expand_tile(*ch);
             for (tx, ty) in (0..3).cartesian_product(0..3) {
                 expanded_grid[y * 3 + ty][x * 3 + tx] = expanded_tile[ty][tx];
             }
@@ -123,11 +123,11 @@ fn expand_grid(grid: &Grid) -> FloodFillGrid {
     expanded_grid
 }
 
-fn expand_tile(ch: &char) -> [[FloodFillTile; 3]; 3] {
+fn expand_tile(ch: char) -> [[FloodFillTile; 3]; 3] {
     #[allow(non_snake_case)]
     let W = Wall;
     let e = Empty;
-    match *ch {
+    match ch {
         '|' => [
             [e, W, e], //
             [e, W, e],
