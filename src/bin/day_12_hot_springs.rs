@@ -20,14 +20,14 @@ fn possible_arrangements_sum(records: &[(Vec<u8>, Vec<u64>)]) -> u64 {
     records
         .par_iter()
         .map(|(row, groups)| {
-            let groups_regex = generate_groups_regex(groups);
-            count_possible_arrangements(&mut row.clone(), &groups_regex, &mut HashMap::new())
+            let groups_re = generate_groups_regex(groups);
+            count_possible_arrangements(row, &groups_re, &mut HashMap::new())
         })
         .sum()
 }
 
 fn count_possible_arrangements(
-    row: &mut [u8],
+    row: &[u8],
     groups_re: &Regex,
     cache: &mut HashMap<(usize, usize), u64>,
 ) -> u64 {
@@ -35,29 +35,28 @@ fn count_possible_arrangements(
         return 1;
     };
     let mut total_count = 0;
+    let mut new_row = row.to_vec();
 
-    row[unknown_index] = b'.';
-    if groups_re.is_match(row) {
-        let fixed_groups_count = row[0..unknown_index]
+    new_row[unknown_index] = b'.';
+    if groups_re.is_match(&new_row) {
+        let fixed_groups_count = new_row[0..unknown_index]
             .split(|&b| b == b'.')
             .filter(|s| !s.is_empty())
             .count();
-        let cache_key = (unknown_index + 1, fixed_groups_count);
+        let cache_key = (unknown_index, fixed_groups_count);
         total_count += if let Some(count) = cache.get(&cache_key) {
             *count
         } else {
-            let count = count_possible_arrangements(row, groups_re, cache);
+            let count = count_possible_arrangements(&new_row, groups_re, cache);
             cache.insert(cache_key, count);
             count
         }
     };
 
-    row[unknown_index] = b'#';
-    if groups_re.is_match(row) {
-        total_count += count_possible_arrangements(row, groups_re, cache);
+    new_row[unknown_index] = b'#';
+    if groups_re.is_match(&new_row) {
+        total_count += count_possible_arrangements(&new_row, groups_re, cache);
     }
-
-    row[unknown_index] = b'?';
 
     total_count
 }
