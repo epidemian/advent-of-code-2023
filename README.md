@@ -139,3 +139,25 @@ After arriving to this eclectic solution, i went browsing on the AoC subreddit t
 Neat puzzle. Part 2 was a nice twist that invalidated my 2D-grid expansion solution for part 1, but it turned out to be be quite simple to implement with similar logic, but acting on the galaxies' positions instead of on the grid itself.
 
 `Iterator::tuple_combinations()` from `itertools` was perfect for easily pairing up all galaxies :)
+
+### Day12: Hot Springs
+
+What a brutal part 2! Hardest puzzle so far.
+
+Part 1 could be solved by brute-forcing all possible spring arrangements. But part 2 increased the input sizes fivefold, which, for an exponential $O(2^n)$ brute-force solution and an $n$ increasing from ~20 (i.e. millions of combinations) to ~100, meant non-termination before my death and the death of all stars in the universe. So i had to think of another approach; i'm not that patient.
+
+Two old tricks ended up doing wonders to cut this existential-crisis-inducing runtime: regular expressions, and caching.
+
+[![]( https://imgs.xkcd.com/comics/perl_problems.png)](https://xkcd.com/1171/)
+
+Regular expressions were used to check whether a row of springs like `?###??..??` can match a given set of damaged spring group numbers like `[3, 2]`. Instead of implementing all the ad-hoc matching logic myself, the `[3, 2]` numbers get converted to the regex `^[.?]*[#?]{3}[.?]+[#?]{2}[.?]*$` that will only match spring rows that could have those groups of damaged springs, like `.###.##..` or `?###??..??`, but not `###..###` or `?###?#..??`. This way, the regex engine takes care of all the complicated matching logic to avoid trying out millions of arrangements that cannot possibly match the group numbers.
+
+Still, even with the regex matching cutting down the recursion branches greatly, the solution was still counting each single possible arrangement individually, which, for a final answer in the order of $10^{15}$, still meant a ridiculous amount of time to run.
+
+The second trick was to cache and reuse results to avoid counting every arrangement individually. For example, for input line `?###???????? 3,2,1` (which is part of the example on the puzzle description), at some point we'll get to compute all arrangements for `.###.##..???`, which are 3. And then we'll get to a similar point but with a different position for the 2nd group: `.###..##.???`. Instead of recalculating all 3 arrangements again, we cache that result the first time and reuse it the second time.
+
+This simple optimization cuts down the time to get to the answer from i don't know how much (i left it running for more than an hour) to half a second. Caches can be hard to get right, but they pay off.
+
+Finally, using Rayon to iterate over all input lines in parallel brought down runtime ~540ms to ~130ms. Not bad at all considering this just mean changing a single `.iter()` call to `.par_iter()`.
+
+I'm incredibly grateful for high-quality crates like `regex` and `rayon` on the Rust ecosystem :)
