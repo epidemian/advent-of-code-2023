@@ -140,7 +140,7 @@ Neat puzzle. Part 2 was a nice twist that invalidated my 2D-grid expansion solut
 
 `Iterator::tuple_combinations()` from `itertools` was perfect for easily pairing up all galaxies :)
 
-### Day12: Hot Springs
+### Day 12: Hot Springs
 
 What a brutal part 2! Hardest puzzle so far.
 
@@ -161,3 +161,7 @@ This simple optimization cuts down the time to get to the answer from i don't kn
 Finally, using Rayon to iterate over all input lines in parallel brought down runtime ~540ms to ~130ms. Not bad at all considering this just mean changing a single `.iter()` call to `.par_iter()`.
 
 I'm incredibly grateful for high-quality crates like `regex` and `rayon` on the Rust ecosystem :)
+
+### Day 13: Point of Incidence
+
+A total breather compared to the previous puzzle. `Iterator::zip()` came in very handy to pair up mirrored rows & columns and "discard" extra extra elements, as zip stops iteration when the first of the two iterators finishes.
