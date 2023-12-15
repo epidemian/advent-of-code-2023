@@ -11,21 +11,17 @@ fn main() -> aoc::Result<()> {
 
     // Part 2
     let mut grid = start_grid.clone();
-    let mut remaining_cycles = 1_000_000_000;
-    let mut remaining_cycles_memo = HashMap::new();
-    let mut cycle_detected = false;
-    while remaining_cycles != 0 {
+    let mut remaining_spins = 1_000_000_000;
+    let mut grids_memo = HashMap::new();
+    while remaining_spins > 0 {
         spin_cycle(&mut grid);
-        if !cycle_detected {
-            if let Some(prev_remaining_cycles) = remaining_cycles_memo.get(&grid) {
-                let cycle_size = prev_remaining_cycles - remaining_cycles;
-                remaining_cycles %= cycle_size;
-                cycle_detected = true;
-            } else {
-                remaining_cycles_memo.insert(grid.clone(), remaining_cycles);
-            }
+        remaining_spins -= 1;
+        if let Some(prev_remaining_spins) = grids_memo.get(&grid) {
+            let cycle_size = prev_remaining_spins - remaining_spins;
+            remaining_spins %= cycle_size;
+        } else {
+            grids_memo.insert(grid.clone(), remaining_spins);
         }
-        remaining_cycles -= 1;
     }
     let north_beams_load_p2 = get_north_beams_load(&grid);
 
