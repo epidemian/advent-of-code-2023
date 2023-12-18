@@ -162,6 +162,24 @@ Finally, using Rayon to iterate over all input lines in parallel brought down ru
 
 I'm incredibly grateful for high-quality crates like `regex` and `rayon` on the Rust ecosystem :)
 
+Also i learned about `Iterator::zip_longest()` from `itertools`, which is incredibly useful for cases where you want to zip two sequences but also care about what happens when one is longer than the other. This was originally used to check if a row pattern matched some given group numbers, but ended up not being used on the final solution as it was replaced with the regex check mentioned above.
+
 ### Day 13: Point of Incidence
 
 A total breather compared to the previous puzzle. `Iterator::zip()` came in very handy to pair up mirrored rows & columns and "discard" extra extra elements, as zip stops iteration when the first of the two iterators finishes.
+
+### Day 14: Parabolic Reflector Dish
+
+Solid mid-difficulty puzzle. The rolling on the grid was implemented doing some very naive compare-and-swap logic, similar to Bubble Sort.
+
+Part 2 required some cycle detection and modular math trick, but it wasn't that hard. I think this was similar a puzzle from a previous AoC.
+
+Clocking at ~500ms, this one's the slowest solution thus far. It can probably be optimized a lot, either by using a more efficient rolling algorithm (which is very similar to sorting). Or by using a more machine-friendly model, like modeling rows and cols as single numbers and then doing the "rolling" as bit shifting a bitmask of round rocks and `&`ing with a bitmask of square rocks to detect collisions. Or even by doing parallel computation while rolling the rocks.
+
+### Day 15: Lens Library
+
+Incredibly simple part 1, and rather straightforward part 2, despite the long puzzle description.
+
+### Day 16: The Floor Will Be Lava
+
+Quite fun grid puzzle. I was expecting a challenging part 2, but nope, it was a pretty straightforward reuse of part 1 logic. It felt nice to chain 4 `Iterator::chain()` calls to iterate over all possible starting positions and directions on the grid.
