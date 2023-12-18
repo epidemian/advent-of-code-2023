@@ -4,15 +4,15 @@ fn main() -> aoc::Result<()> {
 
     let mut boxes = vec![vec![]; 256];
     for step in input.trim_end().split(',') {
-        let step = parse_step(step)?;
-        match step {
-            Step::Remove(label) => boxes[hash(label)].retain(|&(l, _)| l != label),
-            Step::Put(label, focal_length) => {
-                let lens = boxes[hash(label)].iter_mut().find(|(l, _)| *l == label);
-                if let Some(existing_lens) = lens {
-                    existing_lens.1 = focal_length;
+        let (label, step_type) = parse_step(step)?;
+        let box_lenses = &mut boxes[hash(label)];
+        match step_type {
+            StepType::Remove => box_lenses.retain(|&(l, _)| l != label),
+            StepType::Put(focal_length) => {
+                if let Some(lens) = box_lenses.iter_mut().find(|(l, _)| *l == label) {
+                    lens.1 = focal_length;
                 } else {
-                    boxes[hash(label)].push((label, focal_length))
+                    box_lenses.push((label, focal_length))
                 }
             }
         }
@@ -29,18 +29,18 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
-enum Step<'a> {
-    Remove(&'a str),
-    Put(&'a str, u64),
+enum StepType {
+    Remove,
+    Put(u64),
 }
 
-fn parse_step(s: &str) -> aoc::Result<Step> {
+fn parse_step(s: &str) -> aoc::Result<(&str, StepType)> {
     if let Some(label) = s.strip_suffix('-') {
-        return Ok(Step::Remove(label));
+        return Ok((label, StepType::Remove));
     }
     if let Some((label, focal_length)) = s.split_once('=') {
         let focal_length = focal_length.parse()?;
-        return Ok(Step::Put(label, focal_length));
+        return Ok((label, StepType::Put(focal_length)));
     }
     Err(format!("invalid step: '{s}'"))?
 }
