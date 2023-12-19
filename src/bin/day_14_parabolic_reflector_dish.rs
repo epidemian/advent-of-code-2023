@@ -50,18 +50,24 @@ fn spin_cycle(grid: &mut Grid) {
     let height = grid.len();
     let width = grid[0].len();
 
-    let mut try_roll = |x1: usize, y1: usize, x2: usize, y2: usize| {
-        if grid[y1][x1] == 'O' && grid[y2][x2] == '.' {
+    let mut roll = |x1: usize, y1: usize, x2: usize, y2: usize| {
+        let can_roll = grid[y1][x1] == 'O' && grid[y2][x2] == '.';
+        if can_roll {
             grid[y2][x2] = 'O';
             grid[y1][x1] = '.';
         }
+        can_roll
     };
 
     // Tilt north
     for x in 0..width {
         for i in 0..height {
+            let mut rolled = false;
             for y in 1..height - i {
-                try_roll(x, y, x, y - 1);
+                rolled |= roll(x, y, x, y - 1);
+            }
+            if !rolled {
+                break;
             }
         }
     }
@@ -69,8 +75,12 @@ fn spin_cycle(grid: &mut Grid) {
     // Tilt west
     for y in 0..height {
         for i in 0..width {
+            let mut rolled = false;
             for x in 1..width - i {
-                try_roll(x, y, x - 1, y);
+                rolled |= roll(x, y, x - 1, y);
+            }
+            if !rolled {
+                break;
             }
         }
     }
@@ -78,8 +88,12 @@ fn spin_cycle(grid: &mut Grid) {
     // Tilt south
     for x in 0..width {
         for i in 0..height {
+            let mut rolled = false;
             for y in (i..height - 1).rev() {
-                try_roll(x, y, x, y + 1);
+                rolled |= roll(x, y, x, y + 1);
+            }
+            if !rolled {
+                break;
             }
         }
     }
@@ -87,8 +101,12 @@ fn spin_cycle(grid: &mut Grid) {
     // Tilt east
     for y in 0..height {
         for i in 0..width {
+            let mut rolled = false;
             for x in (i..width - 1).rev() {
-                try_roll(x, y, x + 1, y);
+                rolled |= roll(x, y, x + 1, y);
+            }
+            if !rolled {
+                break;
             }
         }
     }
