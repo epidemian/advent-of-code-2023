@@ -2,6 +2,7 @@ use itertools::Itertools;
 use pathfinding::directed::dijkstra::dijkstra;
 use std::env;
 
+/// Note: Run this daily solution with DEBUG=1 env var to print the shortest path in the terminal.
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let parse_digit = |ch: char| ch.to_digit(10).ok_or("unexpected non-digit character");
@@ -31,23 +32,22 @@ fn find_min_heat_loss(
         pos == (width - 1, height - 1) && straight_len >= min_straight_len
     };
     let successors = |&((x, y), dir, straight_len): &Node| {
-        [(1, 0), (-1, 0), (0, 1), (0, -1)]
-            .into_iter()
-            .filter_map(move |(dx, dy)| {
-                let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-                let cost = *city.get(ny)?.get(nx)?;
-                if dir == (-dx, -dy) {
-                    return None;
-                }
-                if dir != (0, 0) && (dx, dy) != dir && straight_len < min_straight_len {
-                    return None;
-                }
-                let neighbor_straight_len = if (dx, dy) == dir { straight_len + 1 } else { 1 };
-                if neighbor_straight_len > max_straight_len {
-                    return None;
-                }
-                Some((((nx, ny), (dx, dy), neighbor_straight_len), cost))
-            })
+        let dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)];
+        dirs.into_iter().filter_map(move |(dx, dy)| {
+            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
+            let cost = *city.get(ny)?.get(nx)?;
+            if dir == (-dx, -dy) {
+                return None;
+            }
+            if dir != (0, 0) && (dx, dy) != dir && straight_len < min_straight_len {
+                return None;
+            }
+            let neighbor_straight_len = if (dx, dy) == dir { straight_len + 1 } else { 1 };
+            if neighbor_straight_len > max_straight_len {
+                return None;
+            }
+            Some((((nx, ny), (dx, dy), neighbor_straight_len), cost))
+        })
     };
 
     let (path, min_heat_loss) = dijkstra(&start, successors, success)

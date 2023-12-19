@@ -183,3 +183,4 @@ Incredibly simple part 1, and rather straightforward part 2, despite the long pu
 ### Day 16: The Floor Will Be Lava
 
 Quite fun grid puzzle. I was expecting a challenging part 2, but nope, it was a pretty straightforward reuse of part 1 logic. It felt nice to chain 4 `Iterator::chain()` calls to iterate over all possible starting positions and directions on the grid.
+
