@@ -17,6 +17,7 @@ fn main() -> aoc::Result<()> {
 }
 
 type Grid = Vec<Vec<u32>>;
+type Node = ((usize, usize), (isize, isize), u32);
 
 fn find_min_heat_loss(
     city: &Grid,
@@ -25,77 +26,53 @@ fn find_min_heat_loss(
 ) -> aoc::Result<u32> {
     let height = city.len();
     let width = city[0].len();
-    let start = (0_usize, 0_usize, Dir::None, 0);
-    let goal = (width - 1, height - 1);
-    let (path, min_heat_loss) = dijkstra(
-        &start,
-        |&(x, y, dir, straight_len)| {
-            [
-                (x + 1, y, Dir::Right),
-                (x, y + 1, Dir::Down),
-                (x.wrapping_sub(1), y, Dir::Left),
-                (x, y.wrapping_sub(1), Dir::Up),
-            ]
+    let start: Node = ((0, 0), (0, 0), 0);
+    let success = |&(pos, _d, straight_len): &Node| {
+        pos == (width - 1, height - 1) && straight_len >= min_straight_len
+    };
+    let successors = |&((x, y), dir, straight_len): &Node| {
+        [(1, 0), (-1, 0), (0, 1), (0, -1)]
             .into_iter()
-            .filter_map(move |(nx, ny, nd)| {
+            .filter_map(move |(dx, dy)| {
+                let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
                 let cost = *city.get(ny)?.get(nx)?;
-                if nd == dir.opposite() {
+                if dir == (-dx, -dy) {
                     return None;
                 }
-                if dir != Dir::None && nd != dir && straight_len < min_straight_len {
+                if dir != (0, 0) && (dx, dy) != dir && straight_len < min_straight_len {
                     return None;
                 }
-                let neighbor_straight_len = if nd == dir { straight_len + 1 } else { 1 };
+                let neighbor_straight_len = if (dx, dy) == dir { straight_len + 1 } else { 1 };
                 if neighbor_straight_len > max_straight_len {
                     return None;
                 }
-                Some(((nx, ny, nd, neighbor_straight_len), cost))
+                Some((((nx, ny), (dx, dy), neighbor_straight_len), cost))
             })
-        },
-        |&(x, y, _d, straight_len)| (x, y) == goal && straight_len >= min_straight_len,
-    )
-    .ok_or("couldn't find a path to the machine parts factory")?;
+    };
 
-    debug_print_path(city, path);
+    let (path, min_heat_loss) = dijkstra(&start, successors, success)
+        .ok_or("couldn't find a path to the machine parts factory")?;
+
+    debug_print_path(city, &path);
 
     Ok(min_heat_loss)
 }
 
-#[derive(Eq, PartialEq, Hash, Clone, Copy)]
-enum Dir {
-    None,
-    Up,
-    Right,
-    Down,
-    Left,
-}
-
-impl Dir {
-    fn opposite(&self) -> Dir {
-        match self {
-            Dir::None => Dir::None,
-            Dir::Up => Dir::Down,
-            Dir::Right => Dir::Left,
-            Dir::Down => Dir::Up,
-            Dir::Left => Dir::Right,
-        }
-    }
-}
-
-fn debug_print_path(city: &Grid, path: Vec<(usize, usize, Dir, u32)>) {
+fn debug_print_path(city: &Grid, path: &[Node]) {
     if env::var("DEBUG").is_err() {
         return;
     }
     for (y, row) in city.iter().enumerate() {
         let mut line = String::new();
         for (x, block) in row.iter().enumerate() {
-            if let Some((_, _, d, _)) = path.iter().find(|&&(px, py, ..)| (px, py) == (x, y)) {
-                let ch = match d {
-                    Dir::None => 'S',
-                    Dir::Up => '^',
-                    Dir::Right => '>',
-                    Dir::Down => 'v',
-                    Dir::Left => '<',
+            if let Some((_, dir, _)) = path.iter().find(|&&(pos, ..)| pos == (x, y)) {
+                let ch = match dir {
+                    (0, 0) => 'S',
+                    (-1, 0) => '<',
+                    (1, 0) => '>',
+                    (0, -1) => '^',
+                    (0, 1) => 'v',
+                    _ => unreachable!(),
                 };
                 line.push_str(&format!("\x1b[34;1m{ch}\x1b[0m"));
             } else {
