@@ -184,3 +184,8 @@ Incredibly simple part 1, and rather straightforward part 2, despite the long pu
 
 Quite fun grid puzzle. I was expecting a challenging part 2, but nope, it was a pretty straightforward reuse of part 1 logic. It felt nice to chain 4 `Iterator::chain()` calls to iterate over all possible starting positions and directions on the grid.
 
+### Day 17: Clumsy Crucible
+
+A very original pathfinding puzzle. I ended up using the Dijkstra's algorithm from the `pathfinding` crate instead of implementing my own (i.e. copying it from one of my previous Rust AoC projects).
+
+It was nice to model the "cannot go in a straight line for more than N blocks" rule into the `successors` function. And it was also quite satisfying to extract a common function to solve both part 1 & 2 with just two different parameter numbers.
