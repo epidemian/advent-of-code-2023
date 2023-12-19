@@ -3,10 +3,11 @@ use std::collections::HashMap;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let start_grid: Grid = input.lines().map(|l| l.chars().collect()).collect();
+    // TODO: Ensure grid is square.
 
     // Part 1
     let mut grid = start_grid.clone();
-    tilt_north(&mut grid);
+    tilt_platform(&mut grid, NORTH);
     let north_beams_load_p1 = get_north_beams_load(&grid);
 
     // Part 2
@@ -14,7 +15,9 @@ fn main() -> aoc::Result<()> {
     let mut remaining_spins = 1_000_000_000;
     let mut grids_memo = HashMap::new();
     while remaining_spins > 0 {
-        spin_cycle(&mut grid);
+        for dir in [NORTH, WEST, SOUTH, EAST] {
+            tilt_platform(&mut grid, dir);
+        }
         remaining_spins -= 1;
         if let Some(prev_remaining_spins) = grids_memo.get(&grid) {
             let cycle_size = prev_remaining_spins - remaining_spins;
@@ -30,86 +33,51 @@ fn main() -> aoc::Result<()> {
 }
 
 type Grid = Vec<Vec<char>>;
+type Point = (isize, isize);
 
-fn tilt_north(grid: &mut Grid) {
-    let height = grid.len();
-    let width = grid[0].len();
-    for col in 0..width {
-        for i in 0..height {
-            for j in 1..height - i {
-                if grid[j][col] == 'O' && grid[j - 1][col] == '.' {
-                    grid[j - 1][col] = 'O';
-                    grid[j][col] = '.';
+const NORTH: Point = (0, -1);
+const WEST: Point = (-1, 0);
+const SOUTH: Point = (0, 1);
+const EAST: Point = (1, 0);
+
+fn tilt_platform(grid: &mut Grid, (dx, dy): Point) {
+    let size = grid.len() as isize;
+    let neg_dir = (-dx, -dy);
+    // Orthogonal direction. Only right or down.
+    let ortho_dir = (dy.abs(), dx.abs());
+
+    let mut line_start = (0, 0);
+    for _ in 0..size {
+        let off_x = if dx == 1 { size - 1 } else { 0 };
+        let off_y = if dy == 1 { size - 1 } else { 0 };
+        let mut pos = add(line_start, (off_x, off_y));
+        let mut last_empty_pos = pos;
+        // We move on a vertical or horizontal line, going in the opposite of the given direction,
+        // and "rolling" the round rocks in the given direction up to last_empty_pos, updating the
+        // latter as we go.
+        for _ in 0..size {
+            let ch = at(grid, pos);
+            match ch {
+                '#' => last_empty_pos = add(pos, neg_dir),
+                'O' => {
+                    *at(grid, pos) = '.';
+                    *at(grid, last_empty_pos) = 'O';
+                    last_empty_pos = add(last_empty_pos, neg_dir)
                 }
+                _ => {}
             }
+            pos = add(pos, neg_dir);
         }
+        line_start = add(line_start, ortho_dir);
     }
 }
 
-fn spin_cycle(grid: &mut Grid) {
-    let height = grid.len();
-    let width = grid[0].len();
+fn at(grid: &mut Grid, (x, y): Point) -> &mut char {
+    &mut grid[y as usize][x as usize]
+}
 
-    let mut roll = |x1: usize, y1: usize, x2: usize, y2: usize| {
-        let can_roll = grid[y1][x1] == 'O' && grid[y2][x2] == '.';
-        if can_roll {
-            grid[y2][x2] = 'O';
-            grid[y1][x1] = '.';
-        }
-        can_roll
-    };
-
-    // Tilt north
-    for x in 0..width {
-        for i in 0..height {
-            let mut rolled = false;
-            for y in 1..height - i {
-                rolled |= roll(x, y, x, y - 1);
-            }
-            if !rolled {
-                break;
-            }
-        }
-    }
-
-    // Tilt west
-    for y in 0..height {
-        for i in 0..width {
-            let mut rolled = false;
-            for x in 1..width - i {
-                rolled |= roll(x, y, x - 1, y);
-            }
-            if !rolled {
-                break;
-            }
-        }
-    }
-
-    // Tilt south
-    for x in 0..width {
-        for i in 0..height {
-            let mut rolled = false;
-            for y in (i..height - 1).rev() {
-                rolled |= roll(x, y, x, y + 1);
-            }
-            if !rolled {
-                break;
-            }
-        }
-    }
-
-    // Tilt east
-    for y in 0..height {
-        for i in 0..width {
-            let mut rolled = false;
-            for x in (i..width - 1).rev() {
-                rolled |= roll(x, y, x + 1, y);
-            }
-            if !rolled {
-                break;
-            }
-        }
-    }
+fn add((x1, y1): Point, (x2, y2): Point) -> Point {
+    (x1 + x2, y1 + y2)
 }
 
 fn get_north_beams_load(grid: &Grid) -> usize {
