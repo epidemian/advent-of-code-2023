@@ -1,50 +1,16 @@
 use itertools::Itertools;
-use std::{collections::HashSet, env};
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let dig_plan: Vec<_> = input.lines().map(parse_instruction).try_collect()?;
-    let (mut x, mut y) = (0, 0);
-    let mut trench: HashSet<(i32, i32)> = HashSet::from_iter([(x, y)]);
-    let (mut min_x, mut min_y) = (0, 0);
-    let (mut max_x, mut max_y) = (0, 0);
-    for (dir, count) in dig_plan {
-        for _ in 0..count {
-            match dir {
-                Dir::Up => y -= 1,
-                Dir::Down => y += 1,
-                Dir::Left => x -= 1,
-                Dir::Right => x += 1,
-            }
-            trench.insert((x, y));
-            min_x = min_x.min(x);
-            max_x = max_x.max(x);
-            min_y = min_y.min(y);
-            max_y = max_y.max(y);
-        }
-    }
-    dig_interior(&mut trench);
-    println!("{}", trench.len());
-
-    if env::var("DEBUG").is_ok() {
-        for y in min_y..=max_y {
-            let mut line = String::new();
-            for x in min_x..=max_x {
-                line.push(if (x, y) == (0, 0) {
-                    '█'
-                } else if trench.contains(&(x, y)) {
-                    '#'
-                } else {
-                    '.'
-                })
-            }
-            println!("{line}");
-        }
-    }
+    let dig_plan_p1: Vec<_> = input.lines().map(parse_instruction_p1).try_collect()?;
+    let dig_plan_p2: Vec<_> = input.lines().map(parse_instruction_p2).try_collect()?;
+    let lagoon_area_p1 = get_lagoon_area(&dig_plan_p1);
+    let lagoon_area_p2 = get_lagoon_area(&dig_plan_p2);
+    println!("{lagoon_area_p1} {lagoon_area_p2}");
     Ok(())
 }
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 enum Dir {
     Up,
     Down,
@@ -52,21 +18,43 @@ enum Dir {
     Right,
 }
 
-fn dig_interior(trench: &mut HashSet<(i32, i32)>) {
-    // TODO: de-hardcode starting interior point.
-    let mut to_dig = vec![(0, -1)];
-    while let Some((x, y)) = to_dig.pop() {
-        trench.insert((x, y));
-        let neighbors = [(x, y - 1), (x, y + 1), (x - 1, y), (x + 1, y)];
-        for (nx, ny) in neighbors {
-            if !trench.contains(&(nx, ny)) {
-                to_dig.push((nx, ny))
-            }
-        }
-    }
+fn get_lagoon_area(dig_plan: &[(Dir, i64)]) -> i64 {
+    let polygon = build_polygon(dig_plan);
+    let polygon_area = get_polygon_area(&polygon);
+    let polygon_perimeter: i64 = dig_plan.iter().map(|(_, c)| *c).sum();
+    // The polygon area doesn't take into account the "thickness" of the trench, which adds this
+    // extra area based on the polygon perimeter. Check sample_square.txt file for an easy to
+    // understand example of this.
+    polygon_area + polygon_perimeter / 2 + 1
 }
 
-fn parse_instruction(s: &str) -> aoc::Result<(Dir, u32)> {
+fn build_polygon(dig_plan: &[(Dir, i64)]) -> Vec<(i64, i64)> {
+    let (mut x, mut y) = (0, 0);
+    let mut polygon = vec![(x, y)];
+    for &(dir, count) in dig_plan.iter() {
+        match dir {
+            Dir::Up => y -= count,
+            Dir::Down => y += count,
+            Dir::Left => x -= count,
+            Dir::Right => x += count,
+        }
+        polygon.push((x, y))
+    }
+    polygon
+}
+
+/// Calculates the area of a polygon using the Shoelace formula.
+/// See https://en.wikipedia.org/wiki/Shoelace_formula
+fn get_polygon_area(polygon: &[(i64, i64)]) -> i64 {
+    let twice_area: i64 = polygon
+        .iter()
+        .tuple_windows()
+        .map(|((x1, y1), (x2, y2))| x1 * y2 - x2 * y1)
+        .sum();
+    twice_area / 2
+}
+
+fn parse_instruction_p1(s: &str) -> aoc::Result<(Dir, i64)> {
     let &[dir, count, _hex_color] = &s.split_whitespace().collect_vec()[..].try_into()?;
     let dir = match dir {
         "U" => Dir::Up,
@@ -76,4 +64,22 @@ fn parse_instruction(s: &str) -> aoc::Result<(Dir, u32)> {
         _ => Err(format!("unexpected direction '{dir}'"))?,
     };
     Ok((dir, count.parse()?))
+}
+
+fn parse_instruction_p2(s: &str) -> aoc::Result<(Dir, i64)> {
+    let &[_dir, _count, hex] = &s.split_whitespace().collect_vec()[..].try_into()?;
+    let hex: String = hex.chars().filter(char::is_ascii_hexdigit).collect();
+    if hex.len() != 6 {
+        Err("expected 6-digit hex number")?
+    }
+    let count = i64::from_str_radix(&hex[0..5], 16)?;
+    let last_digit = &hex[5..];
+    let dir = match last_digit {
+        "0" => Dir::Right,
+        "1" => Dir::Down,
+        "2" => Dir::Left,
+        "3" => Dir::Up,
+        _ => Err(format!("unexpected direction '{last_digit}'"))?,
+    };
+    Ok((dir, count))
 }
