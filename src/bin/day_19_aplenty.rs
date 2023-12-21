@@ -37,13 +37,7 @@ enum Operator {
     Lt,
 }
 
-type RatingsIntervals = [Interval; 4];
-
-#[derive(Clone, Copy)]
-struct Interval {
-    start: u64,
-    end: u64,
-}
+type RatingsIntervals = [(u64, u64); 4];
 
 #[derive(Clone, Copy)]
 enum Output<'a> {
@@ -55,7 +49,7 @@ enum Output<'a> {
 fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
     let mut workflow_id = "in";
     loop {
-        // TODO: handle this error better.
+        // TODO: handle this possible input error at parse time.
         let workflow = workflows.get(workflow_id).expect("invalid workflow ID");
         let output = workflow.process(part);
         match output {
@@ -67,17 +61,13 @@ fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
 }
 
 fn get_accept_ratings_combinations(workflows: &HashMap<&str, Workflow>) -> u64 {
-    let full_rating_interval = Interval {
-        start: 1,
-        end: 4000,
-    };
-    let start_intervals = [full_rating_interval; 4];
+    let start_intervals = [(1, 4000); 4];
     let accept_intervals = collect_accept_intervals("in", start_intervals, workflows);
 
     let ratings_cartesian_product = |intervals: &RatingsIntervals| {
         intervals
             .iter()
-            .map(|interval| interval.size())
+            .map(|(start, end)| end - start + 1)
             .product::<u64>()
     };
     accept_intervals.iter().map(ratings_cartesian_product).sum()
@@ -177,10 +167,10 @@ impl Condition {
 
     fn apply_to_intervals(&self, intervals: RatingsIntervals) -> RatingsIntervals {
         let mut intervals = intervals;
-        let interval = &mut intervals[self.category_index];
+        let (start, end) = &mut intervals[self.category_index];
         match self.op {
-            Operator::Gt => interval.start = interval.start.max(self.value + 1),
-            Operator::Lt => interval.end = interval.end.min(self.value - 1),
+            Operator::Gt => *start = (self.value + 1).max(*start),
+            Operator::Lt => *end = (self.value - 1).min(*end),
         }
         intervals
     }
@@ -218,12 +208,6 @@ impl Output<'_> {
             "R" => Output::Reject,
             _ => Output::Workflow(s),
         }
-    }
-}
-
-impl Interval {
-    fn size(&self) -> u64 {
-        self.end - self.start + 1
     }
 }
 
