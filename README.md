@@ -189,3 +189,17 @@ Quite fun grid puzzle. I was expecting a challenging part 2, but nope, it was a 
 A very original pathfinding puzzle. I ended up using the Dijkstra's algorithm from the `pathfinding` crate instead of implementing my own (i.e. copying it from one of my previous Rust AoC projects).
 
 It was nice to model the "cannot go in a straight line for more than N blocks" rule into the `successors` function. And it was also quite satisfying to extract a common function to solve both part 1 & 2 with just two different parameter numbers.
+
+### Day 18: Lavaduct Lagoon
+
+Part 1 could be solved using our old friend: flood filling. But then part 2 required to basically do the same area calculation, but for a giant "lagoon". So instead, some more sophisticated algebra was needed. "Thankfully" my friend [@riffraff](https://riffraff.info/) had semi-spoiled this daily puzzle and mentioned he used the [Shoelace formula](https://en.wikipedia.org/wiki/Shoelace_formula) on it. So i had some idea of what to look for.
+
+This formula for a polygon area worked wonderfully, and was a breeze to implement thanks to `Iterator::tuple_windows` from `itertools`. The tricky pipe loop area for [day 10](#day-10-pipe-maze) could have also been calculated with the Shoelace formula and some careful handling of pipe bends, instead of the brutish approach i used, of "inflating" the grid ninefold to then flood-fill it.
+
+This day i also learned about `Iterator::collect_tuple()` from `itertools`, which can be used on parsing code to extract a known number of elements from an iterator into a tuple, instead of having to either do `it.next()` a bunch of times or collecting the iterator into a `Vec` and then pattern-matching the `Vec` into a slice pattern by making use of `vec[..].try_into()`.
+
+### Day 19: Aplenty
+
+A very original puzzle. Part 1 was more about parsing and modeling the data we're working with, but nothing algorithmically challenging. And part 2 was the complete opposite.
+
+I felt very satisfied of coming up with a working non-sucky solution for part 2 in one sitting. Although i'm sure a more mathematically-oriented person could have approached this in a much more straightforward way. I was completely lost for quite a bit hehe.
