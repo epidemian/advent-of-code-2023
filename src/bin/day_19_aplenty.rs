@@ -16,14 +16,14 @@ fn main() -> aoc::Result<()> {
 
 type Part = [u64; 4];
 
-struct Workflow<'a> {
-    rules: Vec<Rule<'a>>,
-    fallback: Output<'a>,
+struct Workflow {
+    rules: Vec<Rule>,
+    fallback: Output,
 }
 
-struct Rule<'a> {
+struct Rule {
     condition: Condition,
-    output: Output<'a>,
+    output: Output,
 }
 
 struct Condition {
@@ -39,11 +39,10 @@ enum Operator {
 
 type RatingsIntervals = [(u64, u64); 4];
 
-#[derive(Clone, Copy)]
-enum Output<'a> {
+enum Output {
     Accept,
     Reject,
-    Workflow(&'a str),
+    Workflow(String),
 }
 
 fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
@@ -83,7 +82,7 @@ fn collect_accept_intervals(
     let mut accept_intervals = vec![];
     for rule in workflow.rules.iter() {
         let matching_intervals = rule.condition.apply_to_intervals(intervals);
-        match rule.output {
+        match &rule.output {
             Output::Accept => accept_intervals.push(matching_intervals),
             Output::Reject => {}
             Output::Workflow(id) => {
@@ -93,7 +92,7 @@ fn collect_accept_intervals(
         // Continue with the rest of the rules considering this rule's condition not matched.
         intervals = rule.condition.negated().apply_to_intervals(intervals);
     }
-    match workflow.fallback {
+    match &workflow.fallback {
         Output::Accept => accept_intervals.push(intervals),
         Output::Reject => {}
         Output::Workflow(id) => {
@@ -103,7 +102,7 @@ fn collect_accept_intervals(
     accept_intervals
 }
 
-impl Workflow<'_> {
+impl Workflow {
     fn parse(s: &str) -> aoc::Result<Workflow> {
         let rules = s.split(',').collect_vec();
         let [rules @ .., fallback] = &rules[..] else {
@@ -114,15 +113,15 @@ impl Workflow<'_> {
         Ok(Workflow { rules, fallback })
     }
 
-    fn process(&self, part: &Part) -> Output {
+    fn process(&self, part: &Part) -> &Output {
         self.rules
             .iter()
             .find_map(|r| r.process(part))
-            .unwrap_or(self.fallback)
+            .unwrap_or(&self.fallback)
     }
 }
 
-impl Rule<'_> {
+impl Rule {
     fn parse(s: &str) -> aoc::Result<Rule> {
         let (condition, output) = s.split_once(':').ok_or("invalid rule")?;
         let condition = Condition::parse(condition)?;
@@ -130,9 +129,9 @@ impl Rule<'_> {
         Ok(Rule { condition, output })
     }
 
-    fn process(&self, part: &Part) -> Option<Output> {
+    fn process(&self, part: &Part) -> Option<&Output> {
         if self.condition.matches(part) {
-            Some(self.output)
+            Some(&self.output)
         } else {
             None
         }
@@ -201,12 +200,12 @@ impl Operator {
     }
 }
 
-impl Output<'_> {
+impl Output {
     fn parse(s: &str) -> Output {
         match s {
             "A" => Output::Accept,
             "R" => Output::Reject,
-            _ => Output::Workflow(s),
+            _ => Output::Workflow(s.to_string()),
         }
     }
 }
