@@ -2,10 +2,10 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let lines: Vec<_> = input.lines().collect();
-    let [line_1, line_2] = &lines[..] else {
-        Err("expected input to have two lines")?
-    };
+    let (line_1, line_2) = input
+        .lines()
+        .collect_tuple()
+        .ok_or("expected input to have two lines")?;
     let times_s = line_1.strip_prefix("Time:").ok_or("invalid input")?;
     let dists_s = line_2.strip_prefix("Distance:").ok_or("invalid input")?;
 
