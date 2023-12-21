@@ -9,22 +9,9 @@ fn main() -> aoc::Result<()> {
         .filter(|p| process_part(p, &workflows))
         .map(|p| p.iter().sum::<u64>())
         .sum();
-    println!("{ratings_sum}");
+    let accept_combinations = get_accept_ratings_combinations(&workflows);
+    println!("{ratings_sum} {accept_combinations}");
     Ok(())
-}
-
-fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
-    let mut workflow_id = "in";
-    loop {
-        // TODO: handle this error better.
-        let workflow = workflows.get(workflow_id).expect("invalid workflow ID");
-        let output = workflow.process(part);
-        match output {
-            Output::Accept => return true,
-            Output::Reject => return false,
-            Output::Workflow(id) => workflow_id = id,
-        }
-    }
 }
 
 type Part = [u64; 4];
@@ -50,11 +37,80 @@ enum Operator {
     Lt,
 }
 
+type RatingsIntervals = [Interval; 4];
+
+#[derive(Clone, Copy)]
+struct Interval {
+    start: u64,
+    end: u64,
+}
+
 #[derive(Clone, Copy)]
 enum Output<'a> {
     Accept,
     Reject,
     Workflow(&'a str),
+}
+
+fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
+    let mut workflow_id = "in";
+    loop {
+        // TODO: handle this error better.
+        let workflow = workflows.get(workflow_id).expect("invalid workflow ID");
+        let output = workflow.process(part);
+        match output {
+            Output::Accept => return true,
+            Output::Reject => return false,
+            Output::Workflow(id) => workflow_id = id,
+        }
+    }
+}
+
+fn get_accept_ratings_combinations(workflows: &HashMap<&str, Workflow>) -> u64 {
+    let full_rating_interval = Interval {
+        start: 1,
+        end: 4000,
+    };
+    let start_intervals = [full_rating_interval; 4];
+    let accept_intervals = collect_accept_intervals("in", start_intervals, workflows);
+
+    let ratings_cartesian_product = |intervals: &RatingsIntervals| {
+        intervals
+            .iter()
+            .map(|interval| interval.size())
+            .product::<u64>()
+    };
+    accept_intervals.iter().map(ratings_cartesian_product).sum()
+}
+
+fn collect_accept_intervals(
+    workflow_id: &str,
+    intervals: RatingsIntervals,
+    workflows: &HashMap<&str, Workflow>,
+) -> Vec<RatingsIntervals> {
+    let workflow = &workflows[workflow_id];
+    let mut intervals = intervals;
+    let mut accept_intervals = vec![];
+    for rule in workflow.rules.iter() {
+        let matching_intervals = rule.condition.apply_to_intervals(intervals);
+        match rule.output {
+            Output::Accept => accept_intervals.push(matching_intervals),
+            Output::Reject => {}
+            Output::Workflow(id) => {
+                accept_intervals.extend(collect_accept_intervals(id, matching_intervals, workflows))
+            }
+        }
+        // Continue with the rest of the rules considering this rule's condition not matched.
+        intervals = rule.condition.negated().apply_to_intervals(intervals);
+    }
+    match workflow.fallback {
+        Output::Accept => accept_intervals.push(intervals),
+        Output::Reject => {}
+        Output::Workflow(id) => {
+            accept_intervals.extend(collect_accept_intervals(id, intervals, workflows))
+        }
+    }
+    accept_intervals
 }
 
 impl Workflow<'_> {
@@ -118,6 +174,24 @@ impl Condition {
         let part_value = part[self.category_index];
         self.op.apply(part_value, self.value)
     }
+
+    fn apply_to_intervals(&self, intervals: RatingsIntervals) -> RatingsIntervals {
+        let mut intervals = intervals;
+        let interval = &mut intervals[self.category_index];
+        match self.op {
+            Operator::Gt => interval.start = interval.start.max(self.value + 1),
+            Operator::Lt => interval.end = interval.end.min(self.value - 1),
+        }
+        intervals
+    }
+
+    fn negated(&self) -> Condition {
+        let (op, value) = match self.op {
+            Operator::Gt => (Operator::Lt, self.value + 1),
+            Operator::Lt => (Operator::Gt, self.value - 1),
+        };
+        Condition { op, value, ..*self }
+    }
 }
 
 impl Operator {
@@ -144,6 +218,12 @@ impl Output<'_> {
             "R" => Output::Reject,
             _ => Output::Workflow(s),
         }
+    }
+}
+
+impl Interval {
+    fn size(&self) -> u64 {
+        self.end - self.start + 1
     }
 }
 
