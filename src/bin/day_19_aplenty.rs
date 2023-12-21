@@ -48,8 +48,10 @@ enum Output {
 fn process_part(part: &Part, workflows: &HashMap<&str, Workflow>) -> bool {
     let mut workflow_id = "in";
     loop {
-        // TODO: handle this possible input error at parse time.
-        let workflow = workflows.get(workflow_id).expect("invalid workflow ID");
+        let Some(workflow) = workflows.get(workflow_id) else {
+            eprintln!("workflow ID '{workflow_id}' not found; rejecting part");
+            return false;
+        };
         let output = workflow.process(part);
         match output {
             Output::Accept => return true,
@@ -77,7 +79,9 @@ fn collect_accept_intervals(
     intervals: RatingsIntervals,
     workflows: &HashMap<&str, Workflow>,
 ) -> Vec<RatingsIntervals> {
-    let workflow = &workflows[workflow_id];
+    let Some(workflow) = workflows.get(workflow_id) else {
+        return vec![];
+    };
     let mut intervals = intervals;
     let mut accept_intervals = vec![];
     for rule in workflow.rules.iter() {
