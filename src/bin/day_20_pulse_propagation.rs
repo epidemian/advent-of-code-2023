@@ -32,29 +32,30 @@ fn main() -> aoc::Result<()> {
                 low_count += 1;
             }
 
+            let mut emit_pulse = |value| {
+                let new_pulse_src = dst;
+                for new_pulse_dst in &outputs[new_pulse_src] {
+                    pulses.push_back((new_pulse_src, new_pulse_dst, value))
+                }
+            };
+
             let Some(module) = modules.get_mut(dst) else {
                 continue;
             };
             match module {
                 Module::Broadcaster {} => {
-                    for pulse_dst in &outputs[dst] {
-                        pulses.push_back((dst, pulse_dst, value))
-                    }
+                    emit_pulse(value);
                 }
                 Module::FlipFlop { state } => {
                     if value == LOW {
                         *state = !*state;
-                        for pulse_dst in &outputs[dst] {
-                            pulses.push_back((dst, pulse_dst, *state))
-                        }
+                        emit_pulse(*state);
                     }
                 }
                 Module::Conj { mem } => {
                     *mem.get_mut(src).unwrap() = value;
                     let emit_value = !mem.values().all(|&v| v == HIGH);
-                    for pulse_dst in &outputs[dst] {
-                        pulses.push_back((dst, pulse_dst, emit_value))
-                    }
+                    emit_pulse(emit_value);
                 }
             }
         }
