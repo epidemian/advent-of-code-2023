@@ -4,7 +4,7 @@ use std::collections::{HashMap, HashSet};
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let mut bricks: Vec<_> = input.lines().map(parse_brick).try_collect()?;
-    bricks.sort_by_key(|(start, _end)| start.2);
+    bricks.sort_by_key(|brick| brick[0].2);
 
     let mut grid = HashMap::new();
     let mut supports = vec![vec![]; bricks.len()];
@@ -12,17 +12,16 @@ fn main() -> aoc::Result<()> {
 
     for (brick_id, brick) in bricks.iter_mut().enumerate() {
         loop {
-            let new_brick = fall_1(*brick);
-            if new_brick.0 .2 == 0 {
-                for point in brick_points(*brick) {
+            if brick[0].2 == 1 {
+                for point in brick.iter() {
                     grid.insert(point, brick_id);
                 }
                 break;
             }
 
             let mut collides = false;
-            for new_point in brick_points(new_brick) {
-                if let Some(&other_brick_id) = grid.get(&new_point) {
+            for &(x, y, z) in brick.iter() {
+                if let Some(&other_brick_id) = grid.get(&(x, y, z - 1)) {
                     if !supports[other_brick_id].contains(&brick_id) {
                         supports[other_brick_id].push(brick_id);
                     }
@@ -33,13 +32,15 @@ fn main() -> aoc::Result<()> {
                 };
             }
             if collides {
-                for point in brick_points(*brick) {
+                for point in brick.iter() {
                     grid.insert(point, brick_id);
                 }
                 break;
             }
 
-            *brick = new_brick;
+            for (_x, _y, z) in brick.iter_mut() {
+                *z -= 1;
+            }
         }
     }
 
@@ -71,22 +72,6 @@ fn main() -> aoc::Result<()> {
 }
 
 type Point = (u32, u32, u32);
-type Brick = (Point, Point);
-
-fn fall_1(((x1, y1, z1), (x2, y2, z2)): Brick) -> Brick {
-    ((x1, y1, z1 - 1), (x2, y2, z2 - 1))
-}
-
-// TODO: Remove dynamic dispatch
-fn brick_points(((x1, y1, z1), (x2, y2, z2)): Brick) -> Box<dyn Iterator<Item = Point>> {
-    if x1 != x2 {
-        return Box::new((x1..=x2).map(move |x| (x, y1, z1)));
-    }
-    if y1 != y2 {
-        return Box::new((y1..=y2).map(move |y| (x1, y, z1)));
-    }
-    Box::new((z1..=z2).map(move |z| (x1, y1, z)))
-}
 
 fn count_falls_if_disintegrated(
     brick_id: usize,
@@ -110,7 +95,7 @@ fn count_falls_if_disintegrated(
     }
 }
 
-fn parse_brick(line: &str) -> aoc::Result<Brick> {
+fn parse_brick(line: &str) -> aoc::Result<Vec<Point>> {
     let (x1, y1, z1, x2, y2, z2) = aoc::parse_numbers(line)?
         .into_iter()
         .collect_tuple()
@@ -119,5 +104,13 @@ fn parse_brick(line: &str) -> aoc::Result<Brick> {
     assert!(y1 <= y2);
     assert!(z1 <= z2);
 
-    Ok(((x1, y1, z1), (x2, y2, z2)))
+    let points = if x1 != x2 {
+        (x1..=x2).map(|x| (x, y1, z1)).collect()
+    } else if y1 != y2 {
+        (y1..=y2).map(|y| (x1, y, z1)).collect()
+    } else {
+        (z1..=z2).map(|z| (x1, y1, z)).collect()
+    };
+
+    Ok(points)
 }
