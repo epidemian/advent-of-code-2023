@@ -7,12 +7,8 @@ fn main() -> aoc::Result<()> {
     let bricks = input.lines().map(parse_brick).try_collect()?;
     let (supports, supported_by) = fall_bricks(bricks);
 
-    let fall_counts = supports
-        .iter()
-        .enumerate()
-        .map(|(brick_id, _supported_bricks)| {
-            count_falls_if_disintegrated(brick_id, &supports, &supported_by)
-        })
+    let fall_counts = (0..supports.len())
+        .map(|brick_id| count_falls_if_disintegrated(brick_id, &supports, &supported_by))
         .collect_vec();
 
     let safe_disintegration_count = fall_counts.iter().filter(|&&count| count == 0).count();
