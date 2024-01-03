@@ -3,46 +3,8 @@ use std::collections::{HashMap, HashSet};
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let mut bricks: Vec<_> = input.lines().map(parse_brick).try_collect()?;
-    bricks.sort_by_key(|brick| brick[0].2);
-
-    let mut grid = HashMap::new();
-    let mut supports = vec![vec![]; bricks.len()];
-    let mut supported_by = vec![vec![]; bricks.len()];
-
-    for (brick_id, brick) in bricks.iter_mut().enumerate() {
-        loop {
-            if brick[0].2 == 1 {
-                for point in brick.iter() {
-                    grid.insert(point, brick_id);
-                }
-                break;
-            }
-
-            let mut collides = false;
-            for &(x, y, z) in brick.iter() {
-                if let Some(&other_brick_id) = grid.get(&(x, y, z - 1)) {
-                    if !supports[other_brick_id].contains(&brick_id) {
-                        supports[other_brick_id].push(brick_id);
-                    }
-                    if !supported_by[brick_id].contains(&other_brick_id) {
-                        supported_by[brick_id].push(other_brick_id);
-                    }
-                    collides = true;
-                };
-            }
-            if collides {
-                for point in brick.iter() {
-                    grid.insert(point, brick_id);
-                }
-                break;
-            }
-
-            for (_x, _y, z) in brick.iter_mut() {
-                *z -= 1;
-            }
-        }
-    }
+    let bricks = input.lines().map(parse_brick).try_collect()?;
+    let (supports, supported_by) = fall_bricks(bricks);
 
     let safe_disintegration_count = supports
         .iter()
@@ -71,12 +33,46 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
+fn fall_bricks(mut bricks: Vec<Vec<Point>>) -> (Vec<HashSet<usize>>, Vec<HashSet<usize>>) {
+    bricks.sort_by_key(|brick| brick[0].2);
+
+    let mut grid = HashMap::<Point, usize>::new();
+    let mut supports = vec![HashSet::new(); bricks.len()];
+    let mut supported_by = vec![HashSet::new(); bricks.len()];
+
+    for (brick_id, brick) in bricks.iter_mut().enumerate() {
+        loop {
+            let supporting_bricks: HashSet<_> = brick
+                .iter()
+                .filter_map(|&(x, y, z)| grid.get(&(x, y, z - 1)).copied())
+                .collect();
+            for &supporting_brick in supporting_bricks.iter() {
+                supports[supporting_brick].insert(brick_id);
+            }
+            let collides = !supporting_bricks.is_empty();
+            supported_by[brick_id] = supporting_bricks;
+
+            if collides || brick[0].2 == 1 {
+                for &point in brick.iter() {
+                    grid.insert(point, brick_id);
+                }
+                break;
+            }
+
+            for (_x, _y, z) in brick.iter_mut() {
+                *z -= 1;
+            }
+        }
+    }
+    (supports, supported_by)
+}
+
 type Point = (u32, u32, u32);
 
 fn count_falls_if_disintegrated(
     brick_id: usize,
-    supports: &[Vec<usize>],
-    supported_by: &[Vec<usize>],
+    supports: &[HashSet<usize>],
+    supported_by: &[HashSet<usize>],
     falling_bricks: &mut HashSet<usize>,
 ) {
     let unsupported_bricks: Vec<_> = supports[brick_id]
