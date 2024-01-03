@@ -23,6 +23,8 @@ fn main() -> anyhow::Result<()> {
     Ok(())
 }
 
+type Point = (u32, u32, u32);
+
 fn fall_bricks(mut bricks: Vec<Vec<Point>>) -> (Vec<HashSet<usize>>, Vec<HashSet<usize>>) {
     bricks.sort_by_key(|brick| brick[0].2);
 
@@ -56,8 +58,6 @@ fn fall_bricks(mut bricks: Vec<Vec<Point>>) -> (Vec<HashSet<usize>>, Vec<HashSet
     }
     (supports, supported_by)
 }
-
-type Point = (u32, u32, u32);
 
 fn count_falls_if_disintegrated(
     brick_id: usize,
