@@ -1,5 +1,6 @@
 use std::{error, io, result, str::FromStr};
 
+// TODO: Use anyhow::Result instead
 pub type Result<T> = result::Result<T, Box<dyn error::Error>>;
 
 pub fn read_stdin() -> result::Result<String, io::Error> {
