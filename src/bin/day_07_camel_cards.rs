@@ -1,3 +1,4 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -57,7 +58,7 @@ impl Card {
             'J' => Jack,
             '2'..='9' => Number(ch as u32 - '0' as u32),
             'T' => Number(10),
-            _ => Err(format!("invalid character '{ch}'"))?,
+            _ => bail!("invalid character '{ch}'"),
         })
     }
 }
@@ -104,7 +105,7 @@ impl Hand {
 }
 
 fn parse_line(line: &str, js_as_jokers: bool) -> aoc::Result<(Hand, u64)> {
-    let (hand, bid) = line.split_once(' ').ok_or("invalid input")?;
+    let (hand, bid) = line.split_once(' ').context("invalid input")?;
     let cards: Vec<_> = hand
         .chars()
         .map(|ch| Card::parse(ch, js_as_jokers))

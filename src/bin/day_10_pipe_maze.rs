@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -25,17 +26,17 @@ enum Dir {
 use Dir::*;
 
 fn measure_pipe_loop(grid: &Grid) -> aoc::Result<u32> {
-    let start_pos = find_start_position(grid).ok_or("start position not found")?;
+    let start_pos = find_start_position(grid).context("start position not found")?;
     let start_dir = [Up, Right, Down, Left]
         .into_iter()
         .find(|d| try_move(start_pos, *d, grid).is_some())
-        .ok_or("no valid direction from start position found")?;
+        .context("no valid direction from start position found")?;
     let mut pos = start_pos;
     let mut dir = start_dir;
     let mut count = 0;
     loop {
         (pos, dir) = try_move(pos, dir, grid)
-            .ok_or_else(|| format!("invalid turn, going {dir:?} from {pos:?}"))?;
+            .with_context(|| format!("invalid turn, going {dir:?} from {pos:?}"))?;
         count += 1;
         if pos == start_pos {
             break;

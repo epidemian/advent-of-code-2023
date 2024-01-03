@@ -65,7 +65,7 @@ fn count_energized_tiles(
                     beams.push((x + 1, y, RIGHT));
                     break;
                 }
-                _ => Err(format!("unexpected tile '{ch}' in direction {dir}"))?,
+                _ => anyhow::bail!("unexpected tile '{ch}' in direction {dir}"),
             }
             match dir {
                 LEFT => x = x.wrapping_sub(1),

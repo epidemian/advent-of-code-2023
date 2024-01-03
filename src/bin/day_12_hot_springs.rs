@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 use rayon::prelude::*;
 use regex::bytes::Regex;
@@ -81,7 +82,7 @@ fn generate_groups_regex(groups: &[u64]) -> Regex {
 }
 
 fn parse_record(line: &str) -> aoc::Result<Record> {
-    let (springs_row, group_numbers) = line.split_once(' ').ok_or("invalid input")?;
+    let (springs_row, group_numbers) = line.split_once(' ').context("invalid input")?;
     Ok((
         springs_row.as_bytes().to_vec(),
         aoc::parse_numbers(group_numbers)?,

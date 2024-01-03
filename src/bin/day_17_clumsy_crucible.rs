@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 use pathfinding::directed::dijkstra::dijkstra;
 use std::env;
@@ -5,7 +6,7 @@ use std::env;
 /// Note: Run this daily solution with DEBUG=1 env var to print the shortest path in the terminal.
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let parse_digit = |ch: char| ch.to_digit(10).ok_or("unexpected non-digit character");
+    let parse_digit = |ch: char| ch.to_digit(10).context("unexpected non-digit character");
     let city = input
         .lines()
         .map(|l| l.chars().map(parse_digit).try_collect())
@@ -51,7 +52,7 @@ fn find_min_heat_loss(
     };
 
     let (path, min_heat_loss) = dijkstra(&start, successors, success)
-        .ok_or("couldn't find a path to the machine parts factory")?;
+        .context("couldn't find a path to the machine parts factory")?;
 
     debug_print_path(city, &path);
 

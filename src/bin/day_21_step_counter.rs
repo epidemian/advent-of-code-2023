@@ -1,10 +1,11 @@
+use anyhow::Context;
 use itertools::Itertools;
 use pathfinding::directed::dijkstra::dijkstra_reach;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let grid = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
-    let start = find_start_position(&grid).ok_or("starting position not found")?;
+    let start = find_start_position(&grid).context("starting position not found")?;
 
     let ans_1 = count_reachable_tiles(&grid, start, 64);
     let ans_2 = extrapolate_reachable_tiles(&grid, start, 26501365);

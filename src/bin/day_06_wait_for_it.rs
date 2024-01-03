@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -5,9 +6,9 @@ fn main() -> aoc::Result<()> {
     let (line_1, line_2) = input
         .lines()
         .collect_tuple()
-        .ok_or("expected input to have two lines")?;
-    let times_s = line_1.strip_prefix("Time:").ok_or("invalid input")?;
-    let dists_s = line_2.strip_prefix("Distance:").ok_or("invalid input")?;
+        .context("expected input to have two lines")?;
+    let times_s = line_1.strip_prefix("Time:").context("invalid input")?;
+    let dists_s = line_2.strip_prefix("Distance:").context("invalid input")?;
 
     let times: Vec<u64> = times_s.split_whitespace().map(str::parse).try_collect()?;
     let distances: Vec<u64> = dists_s.split_whitespace().map(str::parse).try_collect()?;

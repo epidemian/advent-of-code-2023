@@ -1,8 +1,8 @@
-use anyhow::{ensure, Context};
+use anyhow::Context;
 use itertools::{iproduct, Itertools};
 use std::collections::{HashMap, HashSet};
 
-fn main() -> anyhow::Result<()> {
+fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let bricks = input.lines().map(parse_brick).try_collect()?;
     let (supports, supported_by) = fall_bricks(bricks);
@@ -86,12 +86,12 @@ fn count_falls_if_disintegrated(
     falling_bricks.len() - 1
 }
 
-fn parse_brick(line: &str) -> anyhow::Result<Vec<Point>> {
+fn parse_brick(line: &str) -> aoc::Result<Vec<Point>> {
     let (x1, y1, z1, x2, y2, z2) = aoc::parse_numbers(line)?
         .into_iter()
         .collect_tuple()
         .context("invalid brick line")?;
-    ensure!(x1 <= x2 && y1 <= y2 && z1 <= z2);
+    anyhow::ensure!(x1 <= x2 && y1 <= y2 && z1 <= z2);
 
     let points = iproduct!(x1..=x2, y1..=y2, z1..=z2).collect();
     Ok(points)

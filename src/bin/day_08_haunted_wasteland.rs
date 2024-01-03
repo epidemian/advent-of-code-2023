@@ -1,9 +1,10 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let (instructions, nodes) = input.split_once("\n\n").ok_or("invalid input")?;
+    let (instructions, nodes) = input.split_once("\n\n").context("invalid input")?;
     let nodes: HashMap<_, _> = nodes.lines().map(parse_node).try_collect()?;
 
     let ans_1 = count_steps("AAA", instructions, &nodes)?;
@@ -22,12 +23,12 @@ fn count_steps(start: &str, instructions: &str, nodes: &Graph) -> aoc::Result<u6
     loop {
         let (left, right) = nodes
             .get(curr)
-            .ok_or_else(|| format!("node '{curr}' not found"))?;
-        let inst = inst_iter.next().ok_or("no instructions found")?;
+            .with_context(|| format!("node '{curr}' not found"))?;
+        let inst = inst_iter.next().context("no instructions found")?;
         match inst {
             'L' => curr = left,
             'R' => curr = right,
-            _ => Err(format!("unexpected instruction char '{inst}'"))?,
+            _ => bail!("unexpected instruction char '{inst}'"),
         }
         count += 1;
         if curr.ends_with('Z') {
@@ -54,7 +55,10 @@ fn count_steps_multiple_starts(instructions: &str, nodes: &Graph) -> aoc::Result
         .iter()
         .map(|start_id| count_steps(start_id, instructions, nodes))
         .try_collect()?;
-    let combined_count = counts.into_iter().reduce(lcm).ok_or("no starting nodes")?;
+    let combined_count = counts
+        .into_iter()
+        .reduce(lcm)
+        .context("no starting nodes")?;
     Ok(combined_count)
 }
 
@@ -73,8 +77,8 @@ fn lcm(a: u64, b: u64) -> u64 {
 }
 
 fn parse_node(s: &str) -> aoc::Result<(&str, (&str, &str))> {
-    let (id, connected_ids) = s.split_once(" = ").ok_or("expected an = sign")?;
-    let (left_id, right_id) = parse_connections(connected_ids).ok_or("invalid input format")?;
+    let (id, connected_ids) = s.split_once(" = ").context("expected an = sign")?;
+    let (left_id, right_id) = parse_connections(connected_ids).context("invalid input format")?;
     Ok((id, (left_id, right_id)))
 }
 

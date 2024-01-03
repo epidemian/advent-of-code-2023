@@ -1,3 +1,4 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -55,27 +56,27 @@ fn get_polygon_area(polygon: &[(i64, i64)]) -> i64 {
 }
 
 fn parse_instruction_p1(s: &str) -> aoc::Result<(Dir, i64)> {
-    let (dir, count, _hex) = s.split_whitespace().collect_tuple().ok_or("bad input")?;
+    let (dir, count, _hex) = s.split_whitespace().collect_tuple().context("bad input")?;
     let dir = match dir {
         "U" => Dir::Up,
         "D" => Dir::Down,
         "L" => Dir::Left,
         "R" => Dir::Right,
-        _ => Err(format!("unexpected direction '{dir}'"))?,
+        _ => bail!("unexpected direction '{dir}'"),
     };
     Ok((dir, count.parse()?))
 }
 
 fn parse_instruction_p2(s: &str) -> aoc::Result<(Dir, i64)> {
-    let (_dir, _count, hex) = s.split_whitespace().collect_tuple().ok_or("bad input")?;
-    let hex = hex.get(2..8).ok_or("invalid hex number")?;
+    let (_dir, _count, hex) = s.split_whitespace().collect_tuple().context("bad input")?;
+    let hex = hex.get(2..8).context("invalid hex number")?;
     let count = i64::from_str_radix(&hex[0..5], 16)?;
     let dir = match &hex[5..] {
         "0" => Dir::Right,
         "1" => Dir::Down,
         "2" => Dir::Left,
         "3" => Dir::Up,
-        d => Err(format!("unexpected direction '{d}'"))?,
+        d => bail!("unexpected direction '{d}'"),
     };
     Ok((dir, count))
 }

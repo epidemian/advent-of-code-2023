@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -115,8 +116,10 @@ impl RangeMap {
 }
 
 fn parse_input(input: &str) -> aoc::Result<(Vec<u64>, Vec<Map>)> {
-    let (seeds_part, rest) = input.split_once("\n\n").ok_or("invalid input")?;
-    let seeds = &seeds_part.strip_prefix("seeds: ").ok_or("invalid input")?;
+    let (seeds_part, rest) = input.split_once("\n\n").context("invalid input")?;
+    let seeds = &seeds_part
+        .strip_prefix("seeds: ")
+        .context("invalid input")?;
     let seeds = seeds.split(' ').map(str::parse).try_collect()?;
     let maps = rest.split("\n\n").map(parse_map).try_collect()?;
     Ok((seeds, maps))

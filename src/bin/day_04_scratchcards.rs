@@ -1,3 +1,4 @@
+use anyhow::Context;
 use itertools::Itertools;
 use std::collections::HashSet;
 
@@ -26,10 +27,10 @@ fn main() -> aoc::Result<()> {
 }
 
 fn parse_card(line: &str) -> aoc::Result<(HashSet<u32>, HashSet<u32>)> {
-    let (_, numbers_part) = line.split_once(": ").ok_or("malformed card line")?;
+    let (_, numbers_part) = line.split_once(": ").context("malformed card line")?;
     let (left, right) = numbers_part
         .split_once(" | ")
-        .ok_or("malformed card line")?;
+        .context("malformed card line")?;
     let winning_numbers = left.split_whitespace().map(str::parse).try_collect()?;
     let my_numbers = right.split_whitespace().map(str::parse).try_collect()?;
     Ok((winning_numbers, my_numbers))

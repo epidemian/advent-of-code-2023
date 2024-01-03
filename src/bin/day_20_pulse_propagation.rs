@@ -1,3 +1,4 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 use std::collections::{HashMap, VecDeque};
 
@@ -121,7 +122,7 @@ fn parse_modules(input: &str) -> aoc::Result<Vec<(&str, Module, Vec<&str>)>> {
 }
 
 fn parse_module(line: &str) -> aoc::Result<(&str, Module, Vec<&str>)> {
-    let (name, outputs) = line.split_once(" -> ").ok_or("invalid line")?;
+    let (name, outputs) = line.split_once(" -> ").context("invalid line")?;
     let outputs = outputs.split(", ").collect();
     if name == "broadcaster" {
         Ok((name, Module::Broadcaster {}, outputs))
@@ -133,6 +134,6 @@ fn parse_module(line: &str) -> aoc::Result<(&str, Module, Vec<&str>)> {
         };
         Ok((name, module, outputs))
     } else {
-        Err(format!("invalid module name {name}"))?
+        bail!("invalid module name {name}")
     }
 }

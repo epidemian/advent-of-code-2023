@@ -42,7 +42,7 @@ fn parse_step(s: &str) -> aoc::Result<(&str, StepType)> {
         let focal_length = focal_length.parse()?;
         return Ok((label, StepType::Put(focal_length)));
     }
-    Err(format!("invalid step: '{s}'"))?
+    anyhow::bail!("invalid step: '{s}'")
 }
 
 fn hash(s: &str) -> usize {

@@ -1,3 +1,4 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -17,8 +18,10 @@ struct Game {
 
 impl Game {
     fn parse(s: &str) -> aoc::Result<Game> {
-        let (id_part, sets_part) = s.split_once(": ").ok_or("malformed game line")?;
-        let id = id_part.strip_prefix("Game ").ok_or("malformed game line")?;
+        let (id_part, sets_part) = s.split_once(": ").context("malformed game line")?;
+        let id = id_part
+            .strip_prefix("Game ")
+            .context("malformed game line")?;
         let id = id.parse()?;
         let sets = sets_part.split("; ").map(CubeSet::parse).try_collect()?;
         Ok(Game { id, sets })
@@ -54,13 +57,13 @@ impl CubeSet {
         for cubes_str in s.split(", ") {
             let (n, color) = cubes_str
                 .split_once(' ')
-                .ok_or("expected space between number and color")?;
+                .context("expected space between number and color")?;
             let n: u32 = n.parse()?;
             match color {
                 "red" => set.r += n,
                 "green" => set.g += n,
                 "blue" => set.b += n,
-                _ => Err(format!("unexpected color '{color}'"))?,
+                _ => bail!("unexpected color '{color}'"),
             }
         }
         Ok(set)

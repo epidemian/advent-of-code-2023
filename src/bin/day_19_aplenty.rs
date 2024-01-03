@@ -1,3 +1,4 @@
+use anyhow::{bail, Context};
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -110,7 +111,7 @@ impl Workflow {
     fn parse(s: &str) -> aoc::Result<Workflow> {
         let rules = s.split(',').collect_vec();
         let [rules @ .., fallback] = &rules[..] else {
-            Err("expected at least one fallback rule")?
+            bail!("expected at least one fallback rule")
         };
         let rules = rules.iter().map(|s| Rule::parse(s)).try_collect()?;
         let fallback = Output::parse(fallback);
@@ -127,7 +128,7 @@ impl Workflow {
 
 impl Rule {
     fn parse(s: &str) -> aoc::Result<Rule> {
-        let (condition, output) = s.split_once(':').ok_or("invalid rule")?;
+        let (condition, output) = s.split_once(':').context("invalid rule")?;
         let condition = Condition::parse(condition)?;
         let output = Output::parse(output);
         Ok(Rule { condition, output })
@@ -152,7 +153,7 @@ impl Condition {
             "m" => 1,
             "a" => 2,
             "s" => 3,
-            _ => Err(format!("invalid category '{category}'"))?,
+            _ => bail!("invalid category '{category}'"),
         };
         let op = Operator::parse(op)?;
         let value = value.parse()?;
@@ -192,7 +193,7 @@ impl Operator {
         Ok(match s {
             "<" => Operator::Lt,
             ">" => Operator::Gt,
-            _ => Err(format!("invalid operator '{s}'"))?,
+            _ => bail!("invalid operator '{s}'"),
         })
     }
 
@@ -215,7 +216,7 @@ impl Output {
 }
 
 fn parse_input(input: &str) -> aoc::Result<(HashMap<&str, Workflow>, Vec<Part>)> {
-    let (workflows_input, parts_input) = input.split_once("\n\n").ok_or("invalid input")?;
+    let (workflows_input, parts_input) = input.split_once("\n\n").context("invalid input")?;
     let workflows = workflows_input.lines().map(parse_workflow).try_collect()?;
     let parts = parts_input.lines().map(parse_part).try_collect()?;
     Ok((workflows, parts))
@@ -226,7 +227,7 @@ fn parse_workflow(s: &str) -> aoc::Result<(&str, Workflow)> {
         .split(['{', '}'])
         .filter(|s| !s.is_empty())
         .collect_tuple()
-        .ok_or("invalid workflow")?;
+        .context("invalid workflow")?;
     Ok((id, Workflow::parse(workflow)?))
 }
 

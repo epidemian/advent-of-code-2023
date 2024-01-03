@@ -1,7 +1,6 @@
-use std::{error, io, result, str::FromStr};
+use std::{io, result, str::FromStr};
 
-// TODO: Use anyhow::Result instead
-pub type Result<T> = result::Result<T, Box<dyn error::Error>>;
+pub type Result<T> = anyhow::Result<T>;
 
 pub fn read_stdin() -> result::Result<String, io::Error> {
     io::read_to_string(io::stdin())
