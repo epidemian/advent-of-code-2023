@@ -10,9 +10,7 @@ fn main() -> aoc::Result<()> {
         .iter()
         .enumerate()
         .map(|(brick_id, _supported_bricks)| {
-            let mut falling_bricks = HashSet::from_iter([brick_id]);
-            count_falls_if_disintegrated(brick_id, &supports, &supported_by, &mut falling_bricks);
-            falling_bricks.len() - 1
+            count_falls_if_disintegrated(brick_id, &supports, &supported_by)
         })
         .collect_vec();
 
@@ -64,22 +62,27 @@ fn count_falls_if_disintegrated(
     brick_id: usize,
     supports: &[HashSet<usize>],
     supported_by: &[HashSet<usize>],
-    falling_bricks: &mut HashSet<usize>,
-) {
-    let unsupported_bricks: Vec<_> = supports[brick_id]
-        .iter()
-        .copied()
-        .filter(|&supported_brick_id| {
-            !supported_by[supported_brick_id]
-                .iter()
-                .any(|other_brick_id| !falling_bricks.contains(other_brick_id))
-        })
-        .collect();
+) -> usize {
+    let mut falling_bricks: HashSet<_> = HashSet::from_iter([brick_id]);
 
-    falling_bricks.extend(unsupported_bricks.iter());
-    for &unsupported_brick_id in unsupported_bricks.iter() {
-        count_falls_if_disintegrated(unsupported_brick_id, supports, supported_by, falling_bricks)
+    let mut to_fall = vec![brick_id];
+    while let Some(brick_id) = to_fall.pop() {
+        let unsupported_bricks = supports[brick_id]
+            .iter()
+            .copied()
+            .filter(|&supported_brick_id| {
+                supported_by[supported_brick_id]
+                    .iter()
+                    .all(|other_brick_id| falling_bricks.contains(other_brick_id))
+            })
+            .collect_vec();
+
+        falling_bricks.extend(unsupported_bricks.iter());
+        to_fall.extend(unsupported_bricks);
     }
+
+    // Subtract 1 because we don't want to count the initial brick itself.
+    falling_bricks.len() - 1
 }
 
 fn parse_brick(line: &str) -> aoc::Result<Vec<Point>> {
