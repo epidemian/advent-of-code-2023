@@ -6,19 +6,7 @@ fn main() -> aoc::Result<()> {
     let bricks = input.lines().map(parse_brick).try_collect()?;
     let (supports, supported_by) = fall_bricks(bricks);
 
-    let safe_disintegration_count = supports
-        .iter()
-        .enumerate()
-        .filter(|&(brick_id, supported_bricks)| {
-            supported_bricks.iter().all(|&supported_brick_id| {
-                supported_by[supported_brick_id]
-                    .iter()
-                    .any(|&other_brick_id| other_brick_id != brick_id)
-            })
-        })
-        .count();
-
-    let total_fall_sum: usize = supports
+    let fall_counts = supports
         .iter()
         .enumerate()
         .map(|(brick_id, _supported_bricks)| {
@@ -26,7 +14,10 @@ fn main() -> aoc::Result<()> {
             count_falls_if_disintegrated(brick_id, &supports, &supported_by, &mut falling_bricks);
             falling_bricks.len() - 1
         })
-        .sum();
+        .collect_vec();
+
+    let safe_disintegration_count = fall_counts.iter().filter(|&&count| count == 0).count();
+    let total_fall_sum: usize = fall_counts.iter().sum();
 
     println!("{safe_disintegration_count} {total_fall_sum}");
 
