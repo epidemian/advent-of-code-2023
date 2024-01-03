@@ -1,5 +1,5 @@
 use anyhow::{ensure, Context};
-use itertools::Itertools;
+use itertools::{iproduct, Itertools};
 use std::collections::{HashMap, HashSet};
 
 fn main() -> anyhow::Result<()> {
@@ -93,13 +93,6 @@ fn parse_brick(line: &str) -> anyhow::Result<Vec<Point>> {
         .context("invalid brick line")?;
     ensure!(x1 <= x2 && y1 <= y2 && z1 <= z2);
 
-    let points = if x1 != x2 {
-        (x1..=x2).map(|x| (x, y1, z1)).collect()
-    } else if y1 != y2 {
-        (y1..=y2).map(|y| (x1, y, z1)).collect()
-    } else {
-        (z1..=z2).map(|z| (x1, y1, z)).collect()
-    };
-
+    let points = iproduct!(x1..=x2, y1..=y2, z1..=z2).collect();
     Ok(points)
 }
