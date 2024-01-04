@@ -203,3 +203,17 @@ This day i also learned about `Iterator::collect_tuple()` from `itertools`, whic
 A very original puzzle. Part 1 was more about parsing and modeling the data we're working with, but nothing algorithmically challenging. And part 2 was the complete opposite.
 
 I felt very satisfied of coming up with a working non-sucky solution for part 2 in one sitting. Although i'm sure a more mathematically-oriented person could have approached this in a much more straightforward way. I was completely lost for quite a bit hehe.
+
+### Day 20: Pulse Propagation
+
+This puzzle was extremely... *puzzling*! Part 1 was easy enough to implement; no clever tricks. But part 2 was one of those hard puzzles that requires to understand the particular shape of the input, find patterns in it, and assume many things to find the solution. Or at least that's how i solved it. My implementation would *not* generalize to other inputs. See giant ["Note" comment](src/bin/day_20_pulse_propagation.rs#:~:text=Note:) on the code.
+
+### Day 21: Step Counter
+
+Another 2D grid puzzle. For part 1, i could've implemented some custom BFS-like algorithm to find the reachable tiles, but i went for the lazy solution and reused the Dijkstra's algorithm from the `pathfinding` crate and counted only the tiles with the same parity as the required number of steps.
+
+Part 2 was hard, and required some out of the box thinking. Once the connection between the astronomically large number of steps and the map size was noticed, and also the particular distribution of the walls in the map, it was a matter of thinking how to extrapolate the solution of small multiples of map sizes to the required size. Another one of these very-input-dependant solutions. Again, check [the code comments](src/bin/day_21_step_counter.rs#:~:text=fn%20extrapolate_reachable_tiles) for more clarification.
+
+### Day 22: Sand Slabs
+
+First 3D grid puzzle of AoC 2023! Fortunately, this wasn't as hard as the previous puzzles. Part 2 was an incremental complication over part 1, which actually allowed part 1 to be implemented in terms of the part 2 solution. Even though i was quite unfocused while doing it, it was a satisfying puzzles to solve :)

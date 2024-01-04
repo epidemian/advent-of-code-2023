@@ -98,6 +98,8 @@ fn main() -> aoc::Result<()> {
                 })
                 .map(|(name, _module)| conj_first_low_emits.get(name))
                 .product();
+            // first_low_pulse_to_rx is Some only when all second-level conjugations have emitted
+            // their first low pulse.
             if let Some(part_2_ans) = first_low_pulse_to_rx {
                 println!("{part_2_ans:?}");
                 break;
