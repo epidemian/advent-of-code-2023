@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
-use anyhow::{ensure, Context};
 use itertools::Itertools;
-use pathfinding::directed::yen::yen;
+use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
@@ -14,8 +11,8 @@ fn main() -> aoc::Result<()> {
 
     let graph_p1 = build_graph(&grid, start, end, true);
     let graph_p2 = build_graph(&grid, start, end, false);
-    let ans_1 = find_longest_path(&graph_p1, start, end)?;
-    let ans_2 = find_longest_path(&graph_p2, start, end)?;
+    let ans_1 = find_longest_path(&graph_p1, start, end);
+    let ans_2 = find_longest_path(&graph_p2, start, end);
 
     println!("{ans_1} {ans_2}");
 
@@ -23,32 +20,28 @@ fn main() -> aoc::Result<()> {
 }
 
 type Point = (usize, usize);
-type Graph = HashMap<Point, HashMap<Point, u32>>;
+type Graph = HashMap<Point, Vec<(Point, u32)>>;
 
 fn build_graph(grid: &[Vec<char>], start: Point, end: Point, slippery_slope: bool) -> Graph {
     let mut graph: Graph = HashMap::new();
-    let mut unvisited = vec![(start, (start.0, start.1 + 1))];
-    graph.insert(start, HashMap::new());
+    graph.insert(start, vec![]);
 
+    let mut unvisited = vec![(start, (start.0, start.1 + 1))];
     while let Some((node_pos, next_pos)) = unvisited.pop() {
-        // println!("start walk at {node_pos:?} to {next_pos:?}");
         let mut prev_pos = node_pos;
         let (mut x, mut y) = next_pos;
         let mut steps = 1;
         loop {
             if (x, y) == end {
-                graph.get_mut(&node_pos).unwrap().insert(end, steps);
+                graph.get_mut(&node_pos).unwrap().push((end, steps));
                 break;
             }
             let dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)];
-            let neighbors = dirs.map(|(dx, dy)| {
+            let walkable_neighbors = dirs.map(|(dx, dy)| {
                 let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
                 let Some(tile) = grid.get(ny).and_then(|row| row.get(nx)) else {
                     return None;
                 };
-                if (nx, ny) == prev_pos {
-                    return None;
-                }
                 match tile {
                     'v' if dy == -1 && slippery_slope => return None,
                     '>' if dx == -1 && slippery_slope => return None,
@@ -58,56 +51,53 @@ fn build_graph(grid: &[Vec<char>], start: Point, end: Point, slippery_slope: boo
                 Some((nx, ny))
             });
 
-            let valid_neighbors = neighbors.iter().filter_map(|n| *n);
-            match valid_neighbors.clone().count() {
+            let walkable_non_prev_neighbors = walkable_neighbors
+                .map(|neigh| neigh.and_then(|pos| if pos == prev_pos { None } else { Some(pos) }));
+            match walkable_non_prev_neighbors.iter().flatten().count() {
                 0 => {
-                    println!("dead end {x},{y}");
+                    // Dead end.
                     break;
                 }
                 1 => {
-                    let (nx, ny) = valid_neighbors.clone().next().unwrap();
+                    let (nx, ny) = walkable_non_prev_neighbors.iter().find_map(|n| *n).unwrap();
                     prev_pos = (x, y);
                     (x, y) = (nx, ny);
                     steps += 1;
                 }
                 _ => {
-                    graph.get_mut(&node_pos).unwrap().insert((x, y), steps);
-                    #[allow(clippy::map_entry)]
-                    if !graph.contains_key(&(x, y)) {
-                        graph.insert((x, y), HashMap::new());
-                        for neigh_pos in valid_neighbors {
+                    graph.get_mut(&node_pos).unwrap().push(((x, y), steps));
+                    graph.entry((x, y)).or_insert_with(|| {
+                        for neigh_pos in walkable_neighbors.into_iter().flatten() {
                             unvisited.push(((x, y), neigh_pos));
                         }
-                    }
+                        vec![]
+                    });
                     break;
                 }
             }
         }
     }
 
-    // for (k, v) in graph.iter() {
-    //     println!("{k:?} -> {v:?}");
-    // }
     graph
 }
 
-fn find_longest_path(graph: &Graph, start: Point, end: Point) -> aoc::Result<u32> {
-    let k = 1000;
-    let k_shortest_paths = yen(
-        &start,
-        |&pos| {
-            let nodes = graph.get(&pos).unwrap();
-            nodes.iter().map(|(&pos, &cost)| (pos, cost))
-        },
-        |&pos| pos == end,
-        k,
-    );
-    ensure!(k_shortest_paths.len() < k, "Found too many paths");
-
-    let (_longest_path, longest_path_length) = &k_shortest_paths
-        .into_iter()
-        .max_by_key(|(_path, cost)| *cost)
-        .context("no paths found")?;
-
-    Ok(*longest_path_length)
+fn find_longest_path(graph: &Graph, start: Point, end: Point) -> u32 {
+    let mut max_cost = 0;
+    let mut stack = vec![(vec![start], 0)];
+    while let Some((path, path_cost)) = stack.pop() {
+        let last_node = *path.last().unwrap();
+        if last_node == end {
+            max_cost = max_cost.max(path_cost);
+            continue;
+        }
+        for &(node, node_cost) in graph[&last_node]
+            .iter()
+            .filter(|(node, _cost)| !path.contains(node))
+        {
+            let mut new_path = path.clone();
+            new_path.push(node);
+            stack.push((new_path, path_cost + node_cost));
+        }
+    }
+    max_cost
 }
