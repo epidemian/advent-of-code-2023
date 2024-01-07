@@ -1,3 +1,4 @@
+use anyhow::ensure;
 use itertools::Itertools;
 use std::collections::HashMap;
 
@@ -5,8 +6,8 @@ fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let grid = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
 
-    let ans_1 = find_longest_path(&build_graph(&grid, true));
-    let ans_2 = find_longest_path(&build_graph(&grid, false));
+    let ans_1 = find_longest_path(&build_graph(&grid, true))?;
+    let ans_2 = find_longest_path(&build_graph(&grid, false))?;
     println!("{ans_1} {ans_2}");
 
     Ok(())
@@ -88,23 +89,22 @@ fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
     graph
 }
 
-fn find_longest_path(graph: &Graph) -> u32 {
+fn find_longest_path(graph: &Graph) -> aoc::Result<u32> {
+    ensure!(graph.len() <= 64, "graph is too big for bitmask size");
     let mut max_cost = 0;
-    let mut to_visit = vec![(vec![START], 0)];
-    while let Some((path, path_cost)) = to_visit.pop() {
-        let last_node = path[path.len() - 1];
+    let mut to_visit = vec![(START, 1_u64, 0)];
+    while let Some((last_node, path_bitmask, path_cost)) = to_visit.pop() {
         if last_node == END {
             max_cost = max_cost.max(path_cost);
             continue;
         }
-        for &(node, node_cost) in graph[last_node]
-            .iter()
-            .filter(|(node, _cost)| !path.contains(node))
-        {
-            let mut new_path = path.clone();
-            new_path.push(node);
-            to_visit.push((new_path, path_cost + node_cost));
+        for &(node, node_cost) in graph[last_node].iter() {
+            if (path_bitmask & (1 << node)) == 0 {
+                let new_bitmask = path_bitmask | (1 << node);
+                let new_cost = path_cost + node_cost;
+                to_visit.push((node, new_bitmask, new_cost));
+            }
         }
     }
-    max_cost
+    Ok(max_cost)
 }
