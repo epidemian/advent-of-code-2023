@@ -4,36 +4,37 @@ use std::collections::HashMap;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let grid = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
-    let height = grid.len();
-    let width = grid[0].len();
-    let start = (1, 0);
-    let end = (width - 2, height - 1);
 
-    let graph_p1 = build_graph(&grid, start, end, true);
-    let graph_p2 = build_graph(&grid, start, end, false);
-    let ans_1 = find_longest_path(&graph_p1, start, end);
-    let ans_2 = find_longest_path(&graph_p2, start, end);
-
+    let ans_1 = find_longest_path(&build_graph(&grid, true));
+    let ans_2 = find_longest_path(&build_graph(&grid, false));
     println!("{ans_1} {ans_2}");
 
     Ok(())
 }
 
-type Point = (usize, usize);
-type Graph = HashMap<Point, Vec<(Point, u32)>>;
+type Grid = Vec<Vec<char>>;
+type Graph = Vec<Vec<(usize, u32)>>;
+const START: usize = 0;
+const END: usize = 1;
 
-fn build_graph(grid: &[Vec<char>], start: Point, end: Point, slippery_slope: bool) -> Graph {
-    let mut graph: Graph = HashMap::new();
-    graph.insert(start, vec![]);
+fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
+    let height = grid.len();
+    let width = grid[0].len();
+    let start_pos = (1, 0);
+    let end_pos = (width - 2, height - 1);
 
-    let mut unvisited = vec![(start, (start.0, start.1 + 1))];
+    let mut node_indices: HashMap<_, _> = HashMap::from_iter([(start_pos, START), (end_pos, END)]);
+    let mut graph: Graph = vec![vec![], vec![]];
+
+    let mut unvisited = vec![(start_pos, (start_pos.0, start_pos.1 + 1))];
     while let Some((node_pos, next_pos)) = unvisited.pop() {
+        let node_idx = node_indices[&node_pos];
         let mut prev_pos = node_pos;
         let (mut x, mut y) = next_pos;
         let mut steps = 1;
         loop {
-            if (x, y) == end {
-                graph.get_mut(&node_pos).unwrap().push((end, steps));
+            if (x, y) == end_pos {
+                graph[node_idx].push((END, steps));
                 break;
             }
             let dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)];
@@ -59,19 +60,25 @@ fn build_graph(grid: &[Vec<char>], start: Point, end: Point, slippery_slope: boo
                     break;
                 }
                 1 => {
+                    // Inside a corridor. Keep waling.
                     let (nx, ny) = walkable_non_prev_neighbors.iter().find_map(|n| *n).unwrap();
                     prev_pos = (x, y);
                     (x, y) = (nx, ny);
                     steps += 1;
                 }
                 _ => {
-                    graph.get_mut(&node_pos).unwrap().push(((x, y), steps));
-                    graph.entry((x, y)).or_insert_with(|| {
+                    // On an intersection.
+                    if let Some(&new_node_idx) = node_indices.get(&(x, y)) {
+                        graph[node_idx].push((new_node_idx, steps));
+                    } else {
+                        let new_node_idx = graph.len();
+                        graph.push(vec![]);
+                        node_indices.insert((x, y), new_node_idx);
+                        graph[node_idx].push((new_node_idx, steps));
                         for neigh_pos in walkable_neighbors.into_iter().flatten() {
                             unvisited.push(((x, y), neigh_pos));
                         }
-                        vec![]
-                    });
+                    }
                     break;
                 }
             }
@@ -81,22 +88,22 @@ fn build_graph(grid: &[Vec<char>], start: Point, end: Point, slippery_slope: boo
     graph
 }
 
-fn find_longest_path(graph: &Graph, start: Point, end: Point) -> u32 {
+fn find_longest_path(graph: &Graph) -> u32 {
     let mut max_cost = 0;
-    let mut stack = vec![(vec![start], 0)];
-    while let Some((path, path_cost)) = stack.pop() {
-        let last_node = *path.last().unwrap();
-        if last_node == end {
+    let mut to_visit = vec![(vec![START], 0)];
+    while let Some((path, path_cost)) = to_visit.pop() {
+        let last_node = path[path.len() - 1];
+        if last_node == END {
             max_cost = max_cost.max(path_cost);
             continue;
         }
-        for &(node, node_cost) in graph[&last_node]
+        for &(node, node_cost) in graph[last_node]
             .iter()
             .filter(|(node, _cost)| !path.contains(node))
         {
             let mut new_path = path.clone();
             new_path.push(node);
-            stack.push((new_path, path_cost + node_cost));
+            to_visit.push((new_path, path_cost + node_cost));
         }
     }
     max_cost
