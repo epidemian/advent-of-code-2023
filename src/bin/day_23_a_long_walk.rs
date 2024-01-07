@@ -15,6 +15,7 @@ fn main() -> aoc::Result<()> {
 
 type Grid = Vec<Vec<char>>;
 type Graph = Vec<Vec<(usize, u32)>>;
+
 const START: usize = 0;
 const END: usize = 1;
 
@@ -24,8 +25,8 @@ fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
     let start_pos = (1, 0);
     let end_pos = (width - 2, height - 1);
 
-    let mut node_indices: HashMap<_, _> = HashMap::from_iter([(start_pos, START), (end_pos, END)]);
-    let mut graph: Graph = vec![vec![], vec![]];
+    let mut node_indices = HashMap::<_, _>::from_iter([(start_pos, START), (end_pos, END)]);
+    let mut graph = vec![vec![], vec![]];
 
     let mut unvisited = vec![(start_pos, (start_pos.0, start_pos.1 + 1))];
     while let Some((node_pos, next_pos)) = unvisited.pop() {
@@ -41,45 +42,41 @@ fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
             let dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)];
             let walkable_neighbors = dirs.map(|(dx, dy)| {
                 let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-                let Some(tile) = grid.get(ny).and_then(|row| row.get(nx)) else {
-                    return None;
-                };
+                let tile = grid.get(ny)?.get(nx)?;
                 match tile {
-                    'v' if dy == -1 && slippery_slope => return None,
-                    '>' if dx == -1 && slippery_slope => return None,
-                    '#' => return None,
-                    _ => {}
-                };
-                Some((nx, ny))
+                    'v' if dy == -1 && slippery_slope => None,
+                    '>' if dx == -1 && slippery_slope => None,
+                    '#' => None,
+                    _ => Some((nx, ny)),
+                }
             });
 
             let walkable_non_prev_neighbors = walkable_neighbors
-                .map(|neigh| neigh.and_then(|pos| if pos == prev_pos { None } else { Some(pos) }));
-            match walkable_non_prev_neighbors.iter().flatten().count() {
-                0 => {
+                .iter()
+                .flatten()
+                .filter(|neigh| **neigh != prev_pos)
+                .collect_vec();
+            match &walkable_non_prev_neighbors[..] {
+                [] => {
                     // Dead end.
                     break;
                 }
-                1 => {
+                [&neigh_pos] => {
                     // Inside a corridor. Keep waling.
-                    let (nx, ny) = walkable_non_prev_neighbors.iter().find_map(|n| *n).unwrap();
                     prev_pos = (x, y);
-                    (x, y) = (nx, ny);
+                    (x, y) = neigh_pos;
                     steps += 1;
                 }
                 _ => {
                     // On an intersection.
-                    if let Some(&new_node_idx) = node_indices.get(&(x, y)) {
-                        graph[node_idx].push((new_node_idx, steps));
-                    } else {
-                        let new_node_idx = graph.len();
-                        graph.push(vec![]);
-                        node_indices.insert((x, y), new_node_idx);
-                        graph[node_idx].push((new_node_idx, steps));
+                    let new_node_idx = *node_indices.entry((x, y)).or_insert_with(|| {
                         for neigh_pos in walkable_neighbors.into_iter().flatten() {
                             unvisited.push(((x, y), neigh_pos));
                         }
-                    }
+                        graph.push(vec![]);
+                        graph.len() - 1
+                    });
+                    graph[node_idx].push((new_node_idx, steps));
                     break;
                 }
             }
