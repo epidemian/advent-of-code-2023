@@ -39,46 +39,37 @@ fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
                 graph[node_idx].push((END, steps));
                 break;
             }
-            let dirs = [(1, 0), (-1, 0), (0, 1), (0, -1)];
-            let walkable_neighbors = dirs.map(|(dx, dy)| {
-                let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-                let tile = grid.get(ny)?.get(nx)?;
-                match tile {
-                    'v' if dy == -1 && slippery_slope => None,
-                    '>' if dx == -1 && slippery_slope => None,
-                    '#' => None,
-                    _ => Some((nx, ny)),
-                }
-            });
-
-            let walkable_non_prev_neighbors = walkable_neighbors
-                .iter()
-                .flatten()
-                .filter(|neigh| **neigh != prev_pos)
+            let walkable_neighbors = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+                .into_iter()
+                .filter_map(|(dx, dy)| {
+                    let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
+                    let tile = grid.get(ny)?.get(nx)?;
+                    match tile {
+                        'v' if dy == -1 && slippery_slope => None,
+                        '>' if dx == -1 && slippery_slope => None,
+                        '#' => None,
+                        _ => Some((nx, ny)),
+                    }
+                })
                 .collect_vec();
-            match &walkable_non_prev_neighbors[..] {
-                [] => {
-                    // Dead end.
-                    break;
-                }
-                [&neigh_pos] => {
-                    // Inside a corridor. Keep waling.
-                    prev_pos = (x, y);
-                    (x, y) = neigh_pos;
-                    steps += 1;
-                }
-                _ => {
-                    // On an intersection.
-                    let new_node_idx = *node_indices.entry((x, y)).or_insert_with(|| {
-                        for neigh_pos in walkable_neighbors.into_iter().flatten() {
-                            unvisited.push(((x, y), neigh_pos));
-                        }
-                        graph.push(vec![]);
-                        graph.len() - 1
-                    });
-                    graph[node_idx].push((new_node_idx, steps));
-                    break;
-                }
+
+            let non_prev = walkable_neighbors.iter().filter(|&&pos| pos != prev_pos);
+            if let Some((neigh_pos,)) = non_prev.collect_tuple() {
+                // Inside a corridor; keep waling.
+                prev_pos = (x, y);
+                (x, y) = *neigh_pos;
+                steps += 1;
+            } else {
+                // On an intersection.
+                let new_node_idx = *node_indices.entry((x, y)).or_insert_with(|| {
+                    for neigh_pos in walkable_neighbors {
+                        unvisited.push(((x, y), neigh_pos));
+                    }
+                    graph.push(vec![]);
+                    graph.len() - 1
+                });
+                graph[node_idx].push((new_node_idx, steps));
+                break;
             }
         }
     }
