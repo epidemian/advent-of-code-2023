@@ -1,4 +1,3 @@
-use anyhow::Context;
 use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
@@ -62,7 +61,7 @@ fn intersect_in_test_area(h1: Hailstone, h2: Hailstone, is_sample: bool) -> bool
 }
 
 fn parse_hailstone(s: &str) -> aoc::Result<Hailstone> {
-    let nums = aoc::parse_numbers(s)?;
-    let (x, y, z, vx, vy, vz) = nums.into_iter().collect_tuple().context("invalid line")?;
+    let numbers = aoc::parse_numbers(s)?;
+    let [x, y, z, vx, vy, vz] = numbers[..].try_into()?;
     Ok(((x, y, z), (vx, vy, vz)))
 }

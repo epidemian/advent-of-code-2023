@@ -110,7 +110,7 @@ fn collect_accept_intervals(
 impl Workflow {
     fn parse(s: &str) -> aoc::Result<Workflow> {
         let rules = s.split(',').collect_vec();
-        let [rules @ .., fallback] = &rules[..] else {
+        let [rules @ .., fallback] = rules.as_slice() else {
             bail!("expected at least one fallback rule")
         };
         let rules = rules.iter().map(|s| Rule::parse(s)).try_collect()?;
@@ -232,6 +232,6 @@ fn parse_workflow(s: &str) -> aoc::Result<(&str, Workflow)> {
 }
 
 fn parse_part(s: &str) -> aoc::Result<Part> {
-    let part = aoc::parse_numbers(s)?[..].try_into()?;
-    Ok(part)
+    let numbers = aoc::parse_numbers(s)?;
+    Ok(numbers[..].try_into()?)
 }
