@@ -220,7 +220,15 @@ First 3D grid puzzle of AoC 2023! Fortunately, this wasn't as hard as the previo
 
 ### Day 23: A Long Walk
 
-A long walk indeed...
+A graph traversal puzzle disguised as a 2D grid puzzle. Sneaky!
+
+The logic for this one was not *too* complicated, but part 2 was computationally challenging, as the graph for which we need to find the longest gets more interconnected, and thus the number of possible paths increases quite enormously.
+
+For part 1, a very dumb solution using a k-shortest paths algorithm from the `pathfinding` package was enough: just find all the paths from start to end keep the longest. But part 2 required something less barbaric.
+
+The most complicated part of the code ended up being converting the initial grid into a weighted graph. After that, a DFS-like algorithm to traverse all paths on the graph and keep the longest was enough.
+
+I found a very nice optimization when i realized that when traversing the graph nodes, instead of keeping a `Vec` of all previous nodes —which required a new allocation and copy every time we take a new path on the graph— we could just mark those visited nodes on a bitmask integer. This vastly cut down the runtime of the solution: from ~7.5s to ~300ms :)
 
 ### Day 24: Never Tell Me The Odds
 
