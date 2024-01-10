@@ -232,4 +232,12 @@ I found a very nice optimization when i realized that when traversing the graph 
 
 ### Day 24: Never Tell Me The Odds
 
-Part 2 was solved using Python [on a notebook](src/bin/day_24_never_tell_me_the_odds_p2.ipynb), due to a lack of symbolic algebra packages in Rust — and a lack of will on my part to think of another solution.
+A relatively simple part 1, though the algebraic part of my brain seems to have collected too much dust through the years, so this 2D intersection calculation didn't come to mind as readily as i would've liked.
+
+Part 2 was on an entire other level of algebra. I had to think about it for the most part of a day, and ended solving it using Python [on a notebook](src/bin/day_24_never_tell_me_the_odds_p2.ipynb), due to a lack of symbolic algebra packages in Rust — and a lack of will on my part to think of another solution. But, even though i think i would have no chance of solving this system of equations with pen and paper, i'm glad of having come up with a working solution that makes some sense to me.
+
+As a sidenote: i was very much disappointed by the lack of good online solvers for this kind of algebraic problems. Wolfram Alpha seems to be the most powerful and accessible tool, but it is arbitrarily caped, and of course a giant black box.
+
+At the same time, i was blown away with the power and usability of `sympy` and Python (Jupyter) notebooks. Python's local environment setup is another story; one of sadness and pain. But maybe it is precisely because of how painful it is to properly set up a local Python environment that tools like Jupyter and Google Colab exist.
+
+I wish a symbolic math package like `sympy` existed for Rust. Being a low-level language that can easily be interfaced with, a package like this could provide a common backend for multiple front-ends on different languages.
