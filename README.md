@@ -217,3 +217,11 @@ Part 2 was hard, and required some out of the box thinking. Once the connection 
 ### Day 22: Sand Slabs
 
 First 3D grid puzzle of AoC 2023! Fortunately, this wasn't as hard as the previous puzzles. Part 2 was an incremental complication over part 1, which actually allowed part 1 to be implemented in terms of the part 2 solution. Even though i was quite unfocused while doing it, it was a satisfying puzzles to solve :)
+
+### Day 23: A Long Walk
+
+A long walk indeed...
+
+### Day 24: Never Tell Me The Odds
+
+Part 2 was solved using Python [on a notebook](src/bin/day_24_never_tell_me_the_odds_p2.ipynb), due to a lack of symbolic algebra packages in Rust — and a lack of will on my part to think of another solution.
