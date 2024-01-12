@@ -4,6 +4,19 @@ use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
+    let graph = parse_graph(&input);
+    let mat = create_adjacency_matrix(&graph);
+    let (cut_size, cut_nodes) = global_min_cut(mat);
+    ensure!(
+        cut_size == 3,
+        "expected the minimum cut of 3, got {cut_size}"
+    );
+    let answer = cut_nodes.len() * (graph.len() - cut_nodes.len());
+    println!("{answer}");
+    Ok(())
+}
+
+fn parse_graph(input: &str) -> HashMap<&str, Vec<&str>> {
     let mut graph: HashMap<&str, Vec<&str>> = HashMap::new();
     for line in input.lines() {
         let node_a = &line[0..3];
@@ -12,14 +25,12 @@ fn main() -> aoc::Result<()> {
             graph.entry(node_b).or_default().push(node_a);
         }
     }
-    let node_indices: HashMap<_, _> = graph
-        .keys()
-        .sorted()
-        .enumerate()
-        .map(|(i, node)| (*node, i))
-        .collect();
-    let n = graph.len();
-    let mut mat = vec![vec![0_i64; n]; n];
+    graph
+}
+
+fn create_adjacency_matrix(graph: &HashMap<&str, Vec<&str>>) -> Vec<Vec<i64>> {
+    let node_indices: HashMap<_, _> = graph.keys().zip(0..).collect();
+    let mut mat = vec![vec![0; graph.len()]; graph.len()];
     for (node, adjacent_nodes) in graph {
         let i = node_indices[node];
         for adj_node in adjacent_nodes.iter() {
@@ -28,20 +39,15 @@ fn main() -> aoc::Result<()> {
             mat[j][i] = 1;
         }
     }
-
-    let (min_cut_size, min_cut_nodes) = global_min_cut(mat);
-    ensure!(min_cut_size == 3, "expected to cut 3 wires");
-
-    let ans_1 = min_cut_nodes.len() * (n - min_cut_nodes.len());
-    println!("{ans_1}");
-
-    Ok(())
+    mat
 }
 
 // Computes the minimum cut of a graph using the Stoer–Wagner algorithm. The graph is given as an
 // adjacency matrix.
 // See: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
-fn global_min_cut(mut mat: Vec<Vec<i64>>) -> (i64, Vec<i64>) {
+// This implementation is just a translation of this C++ code: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
+#[allow(clippy::needless_range_loop)]
+fn global_min_cut(mut mat: Vec<Vec<i64>>) -> (i64, Vec<usize>) {
     let mut best = (i64::MAX, vec![]);
     let n = mat.len();
     let mut co = (0..n).map(|i| vec![i]).collect_vec();
@@ -70,5 +76,5 @@ fn global_min_cut(mut mat: Vec<Vec<i64>>) -> (i64, Vec<i64>) {
         mat[0][t] = i64::MIN;
     }
 
-    (best.0, best.1.into_iter().map(|i| i as i64).collect())
+    best
 }
