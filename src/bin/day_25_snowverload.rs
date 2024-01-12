@@ -48,8 +48,8 @@ fn create_adjacency_matrix(graph: &HashMap<&str, Vec<&str>>) -> Vec<Vec<i64>> {
 // This implementation is just a translation of this C++ code: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
 #[allow(clippy::needless_range_loop)]
 fn global_min_cut(mut mat: Vec<Vec<i64>>) -> (i64, Vec<usize>) {
-    let mut best = (i64::MAX, vec![]);
     let n = mat.len();
+    let mut best = (i64::MAX, vec![]);
     let mut co = (0..n).map(|i| vec![i]).collect_vec();
 
     for phase in 1..n {
@@ -64,7 +64,10 @@ fn global_min_cut(mut mat: Vec<Vec<i64>>) -> (i64, Vec<usize>) {
                 w[i] += mat[t][i]
             }
         }
-        best = best.min((w[t] - mat[t][t], co[t].clone()));
+        let min_cut_of_phase = w[t] - mat[t][t];
+        if min_cut_of_phase < best.0 {
+            best = (min_cut_of_phase, co[t].clone());
+        }
         let co_t = co[t].clone();
         co[s].extend(co_t);
         for i in 0..n {
