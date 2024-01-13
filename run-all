@@ -7,6 +7,12 @@ for bin in target/release/day_*
 do
     [ -x "$bin" ] || continue
     daynum=$(sed -E 's/.*day_([0-9]*)_.*/\1/' <<<$bin)
-    echo -n "Day $daynum: "
-    "$bin" <inputs/$daynum/input.txt
+    start=$(date +%s%3N)
+    out=$("$bin" <inputs/$daynum/input.txt)
+    if [ -z "${TIMINGS:-}" ]; then
+        echo "Day $daynum: $out"
+    else
+        t=$(($(date +%s%3N) - start))
+        echo "Day $daynum: $out (${t}ms)"
+    fi
 done
