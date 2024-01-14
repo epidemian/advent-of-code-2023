@@ -28,11 +28,10 @@ pub fn parse_grid<T>(
         .try_collect()?;
 
     let height = grid.len();
-    anyhow::ensure!(height > 0, "grid must not be empty");
-
-    let width = grid[0].len();
+    let width = grid.first().map_or(0, |r| r.len());
     for row in grid.iter() {
         anyhow::ensure!(row.len() == width, "rows must be all the same length");
     }
+
     Ok((grid, width, height))
 }
