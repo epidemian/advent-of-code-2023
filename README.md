@@ -40,10 +40,10 @@ To run all daily solutions with their input files run:
 ./run-all
 ```
 
-Or pass the `TIMINGS` env var to see the run times of individual days:
+To run all daily solutions in parallel and print their individual execution times:
 
 ```bash
-TIMINGS=1 ./run-all
+PAR=1 TIMINGS=1 ./run-all
 ```
 
 And to check all sample files against their expected output and all input files against the answers on `answers.txt` run:

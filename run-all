@@ -1,18 +1,32 @@
 #!/bin/bash
 set -o errexit -o nounset -o pipefail
 
+# Passing TIMINGS=1 env var prints individual day runtimes.
+# Passing PAR=1 executes all days in parallel; no output order guaranteed.
+
 cargo build --release --quiet
+
+run-single() {
+    bin="$1"
+    daynum=$(sed -E 's/.*day_([0-9]*)_.*/\1/' <<<$bin)
+    start=$(date +%s%3N)
+    out=$("$bin" <inputs/$daynum/input.txt)
+    if [ -n "${TIMINGS:-}" ]; then
+        t=$(($(date +%s%3N) - start))
+        echo "Day $daynum: $out (${t}ms)"
+    else
+        echo "Day $daynum: $out"
+    fi
+}
 
 for bin in target/release/day_*
 do
     [ -x "$bin" ] || continue
-    daynum=$(sed -E 's/.*day_([0-9]*)_.*/\1/' <<<$bin)
-    start=$(date +%s%3N)
-    out=$("$bin" <inputs/$daynum/input.txt)
-    if [ -z "${TIMINGS:-}" ]; then
-        echo "Day $daynum: $out"
+    if [ -n "${PAR:-}" ]; then
+        run-single "$bin" &
     else
-        t=$(($(date +%s%3N) - start))
-        echo "Day $daynum: $out (${t}ms)"
+        run-single "$bin"
     fi
 done
+
+wait
