@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let start_grid: Grid = input.lines().map(|l| l.chars().collect()).collect();
-    // TODO: Ensure grid is square.
+    let (start_grid, width, height) = aoc::parse_char_grid(&input)?;
+    anyhow::ensure!(width == height, "grid must be square");
 
     // Part 1
     let mut grid = start_grid.clone();

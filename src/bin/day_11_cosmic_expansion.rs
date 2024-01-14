@@ -2,10 +2,7 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let image = input
-        .lines()
-        .map(|l| l.chars().map(|ch| ch == '#').collect())
-        .collect();
+    let (image, ..) = aoc::parse_grid(&input, |ch| Ok(ch == '#'))?;
 
     let ans_1 = galaxy_distances_sum(&image, 2);
     let ans_2 = galaxy_distances_sum(&image, 1_000_000);

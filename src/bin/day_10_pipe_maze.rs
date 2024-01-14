@@ -3,7 +3,7 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid: Grid = input.lines().map(|l| l.chars().collect()).collect();
+    let (grid, ..) = aoc::parse_char_grid(&input)?;
 
     let half_pipe_length = measure_pipe_loop(&grid)? / 2;
     let enclosed_count = count_enclosed_tiles(&grid);

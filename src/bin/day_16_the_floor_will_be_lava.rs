@@ -2,11 +2,9 @@ use std::iter;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid = input.lines().map(|l| l.chars().collect()).collect();
+    let (grid, width, height) = aoc::parse_char_grid(&input)?;
     let initial_energized_tiles = count_energized_tiles(&grid, 0, 0, RIGHT)?;
 
-    let height = grid.len();
-    let width = grid[0].len();
     let all_starting_beams = iter::empty()
         .chain((0..height).map(|y| (width - 1, y, LEFT)))
         .chain((0..height).map(|y| (0, y, RIGHT)))

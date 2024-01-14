@@ -4,24 +4,21 @@ use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
+    let (grid, w, h) = aoc::parse_char_grid(&input)?;
 
-    let ans_1 = find_longest_path(&build_graph(&grid, true))?;
-    let ans_2 = find_longest_path(&build_graph(&grid, false))?;
+    let ans_1 = find_longest_path(&build_graph(&grid, w, h, true))?;
+    let ans_2 = find_longest_path(&build_graph(&grid, w, h, false))?;
     println!("{ans_1} {ans_2}");
 
     Ok(())
 }
 
-type Grid = Vec<Vec<char>>;
 type Graph = Vec<Vec<(usize, u32)>>;
 
 const START: usize = 0;
 const END: usize = 1;
 
-fn build_graph(grid: &Grid, slippery_slope: bool) -> Graph {
-    let height = grid.len();
-    let width = grid[0].len();
+fn build_graph(grid: &[Vec<char>], width: usize, height: usize, slippery_slope: bool) -> Graph {
     let start_pos = (1, 0);
     let end_pos = (width - 2, height - 1);
 

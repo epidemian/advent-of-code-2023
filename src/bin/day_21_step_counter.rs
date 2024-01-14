@@ -1,10 +1,10 @@
-use anyhow::Context;
-use itertools::Itertools;
+use anyhow::{ensure, Context};
 use pathfinding::directed::dijkstra::dijkstra_reach;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid = input.lines().map(|l| l.chars().collect_vec()).collect_vec();
+    let (grid, width, height) = aoc::parse_char_grid(&input)?;
+    ensure!(width == height, "grid must be square");
     let start = find_start_position(&grid).context("starting position not found")?;
 
     let ans_1 = count_reachable_tiles(&grid, start, 64);
@@ -81,6 +81,7 @@ fn extrapolate_reachable_tiles(grid: &Grid, start: Point, steps_count: i64) -> i
     f_quadratic(steps_count / size)
 }
 
+// TODO: remove this and assume the start position is in the middle.
 fn find_start_position(grid: &Grid) -> Option<Point> {
     for (row, y) in grid.iter().zip(0..) {
         for (&tile, x) in row.iter().zip(0..) {

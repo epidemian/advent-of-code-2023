@@ -1,19 +1,16 @@
 use anyhow::Context;
-use itertools::Itertools;
 use pathfinding::directed::dijkstra::dijkstra;
 use std::env;
 
 /// Note: Run this daily solution with DEBUG=1 env var to print the shortest path in the terminal.
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let parse_digit = |ch: char| ch.to_digit(10).context("unexpected non-digit character");
-    let city = input
-        .lines()
-        .map(|l| l.chars().map(parse_digit).try_collect())
-        .try_collect()?;
+    let (city, w, h) = aoc::parse_grid(&input, |ch| {
+        ch.to_digit(10).context("unexpected non-digit character")
+    })?;
 
-    let min_heat_loss_p1 = find_min_heat_loss(&city, 0, 3)?;
-    let min_heat_loss_p2 = find_min_heat_loss(&city, 4, 10)?;
+    let min_heat_loss_p1 = find_min_heat_loss(&city, w, h, 0, 3)?;
+    let min_heat_loss_p2 = find_min_heat_loss(&city, w, h, 4, 10)?;
     println!("{min_heat_loss_p1} {min_heat_loss_p2}");
     Ok(())
 }
@@ -23,11 +20,11 @@ type Node = ((usize, usize), (isize, isize), u32);
 
 fn find_min_heat_loss(
     city: &Grid,
+    width: usize,
+    height: usize,
     min_straight_len: u32,
     max_straight_len: u32,
 ) -> aoc::Result<u32> {
-    let height = city.len();
-    let width = city[0].len();
     let start: Node = ((0, 0), (0, 0), 0);
     let success = |&(pos, _d, straight_len): &Node| {
         pos == (width - 1, height - 1) && straight_len >= min_straight_len
