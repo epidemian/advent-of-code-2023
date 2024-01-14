@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let grid: Vec<&str> = input.lines().collect();
-    let number_spans = get_number_spans(&grid);
+    let number_spans = get_number_spans(&grid)?;
 
     // Part 1
     let part_numbers_sum: u32 = number_spans
@@ -53,7 +53,7 @@ fn at(x: usize, y: usize, grid: &Grid) -> u8 {
 
 // Finds all numbers on the grid and returns tuples with (number, start_x, end_x, y) where
 // start_x..=end_x is the span of the number on the grid.
-fn get_number_spans(grid: &Grid) -> Vec<(u32, usize, usize, usize)> {
+fn get_number_spans(grid: &Grid) -> aoc::Result<Vec<(u32, usize, usize, usize)>> {
     let mut spans = vec![];
     for (y, line) in grid.iter().enumerate() {
         let mut x = 0;
@@ -63,8 +63,7 @@ fn get_number_spans(grid: &Grid) -> Vec<(u32, usize, usize, usize)> {
                 while end_x + 1 < line.len() && at(end_x + 1, y, grid).is_ascii_digit() {
                     end_x += 1;
                 }
-                // Note: parse() cannot fail as the slice contains only ASCII digits.
-                let num = line[x..=end_x].parse().unwrap();
+                let num = line[x..=end_x].parse()?;
                 spans.push((num, x, end_x, y));
                 x = end_x + 1;
             } else {
@@ -72,7 +71,7 @@ fn get_number_spans(grid: &Grid) -> Vec<(u32, usize, usize, usize)> {
             }
         }
     }
-    spans
+    Ok(spans)
 }
 
 fn neighbors<'a>(
