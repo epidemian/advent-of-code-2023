@@ -1,9 +1,10 @@
+use anyhow::Context;
 use priority_queue::PriorityQueue;
 use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let graph = parse_graph(&input);
+    let graph = parse_graph(&input)?;
     let (cut_size, cut_nodes) = global_min_cut(to_weighted_graph(&graph));
     anyhow::ensure!(
         cut_size == 3,
@@ -14,16 +15,16 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
-fn parse_graph(input: &str) -> HashMap<&str, Vec<&str>> {
+fn parse_graph(input: &str) -> aoc::Result<HashMap<&str, Vec<&str>>> {
     let mut graph: HashMap<_, Vec<_>> = HashMap::new();
     for line in input.lines() {
-        let node_a = &line[0..3];
-        for node_b in line[5..].split_whitespace() {
+        let (node_a, rest) = line.split_once(": ").context("invalid line")?;
+        for node_b in rest.split_whitespace() {
             graph.entry(node_a).or_default().push(node_b);
             graph.entry(node_b).or_default().push(node_a);
         }
     }
-    graph
+    Ok(graph)
 }
 
 type WeightedGraph = HashMap<usize, HashMap<usize, i64>>;
@@ -46,6 +47,8 @@ fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> WeightedGraph {
 /// puzzle graph has nodes with low degree (i.e. edges), a nested HashMap is used for the weighed
 /// graph instead of an adjacency matrix, to avoid iterating over a relatively big and very sparse
 /// matrix. Also a priority queue was added to speed up the selection of nodes in each phase.
+///
+/// The input graph must be connected. If it is already disjoint, the minimum cut size is undefined.
 ///
 /// [wiki]: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
 /// [cpp_impl]: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
