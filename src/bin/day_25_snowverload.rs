@@ -26,8 +26,10 @@ fn parse_graph(input: &str) -> HashMap<&str, Vec<&str>> {
     graph
 }
 
+type WeightedGraph = HashMap<usize, HashMap<usize, i64>>;
+
 /// Converts the string nodes to numeric indices and adds a weight of 1 to all edges.
-fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> HashMap<usize, HashMap<usize, i64>> {
+fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> WeightedGraph {
     let node_indices: HashMap<_, _> = graph.keys().zip(0..).collect();
     graph
         .iter()
@@ -47,7 +49,7 @@ fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> HashMap<usize, HashMap
 ///
 /// [wiki]: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
 /// [cpp_impl]: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
-fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize) {
+fn global_min_cut(mut graph: WeightedGraph) -> (i64, usize) {
     let n = graph.len();
     let mut best = (i64::MAX, 0);
     let mut combined_count = vec![1; n];
@@ -76,7 +78,7 @@ fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize
         // Contract node t into node s.
         let t_edges = graph.remove(&t).unwrap();
         for (i, e) in t_edges {
-            // It'd be nice if Rust allowed to do `graph[&i].remove(&t)`
+            // It'd be nice if Rust allowed `graph[&i].remove(&t)` (i.e. impl IndexMut for HashMap)
             graph.get_mut(&i).unwrap().remove(&t);
             if i != s {
                 *graph.get_mut(&s).unwrap().entry(i).or_insert(0) += e;
