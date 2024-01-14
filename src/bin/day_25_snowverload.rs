@@ -1,17 +1,15 @@
-use anyhow::ensure;
-use itertools::Itertools;
 use priority_queue::PriorityQueue;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let graph = parse_graph(&input);
-    let (cut_size, cut_nodes) = global_min_cut(to_index_graph(&graph));
-    ensure!(
+    let (cut_size, cut_nodes) = global_min_cut(to_weighted_graph(&graph));
+    anyhow::ensure!(
         cut_size == 3,
         "expected the minimum cut of 3, got {cut_size}"
     );
-    let answer = cut_nodes.len() * (graph.len() - cut_nodes.len());
+    let answer = cut_nodes * (graph.len() - cut_nodes);
     println!("{answer}");
     Ok(())
 }
@@ -28,66 +26,63 @@ fn parse_graph(input: &str) -> HashMap<&str, Vec<&str>> {
     graph
 }
 
-fn to_index_graph(graph: &HashMap<&str, Vec<&str>>) -> Vec<HashSet<usize>> {
-    let node_indices: HashMap<_, _> = graph.keys().sorted().zip(0..).collect();
-    let mut index_graph = vec![HashSet::new(); graph.len()];
-    for (n, adj) in graph.iter() {
-        index_graph[node_indices[&n]] = adj.iter().map(|m| node_indices[m]).collect();
-    }
-    index_graph
+/// Converts the string nodes to numeric indices and adds a weight of 1 to all edges.
+fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> HashMap<usize, HashMap<usize, i64>> {
+    let node_indices: HashMap<_, _> = graph.keys().zip(0..).collect();
+    graph
+        .iter()
+        .map(|(v, edges)| {
+            let i = node_indices[&v];
+            (i, edges.iter().map(|w| (node_indices[w], 1)).collect())
+        })
+        .collect()
 }
 
-// Computes the minimum cut of a graph using the Stoer–Wagner algorithm. The graph is given as an
-// adjacency matrix.
-// See: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
-// This implementation is based on this C++ code: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
-fn global_min_cut(mut graph: Vec<HashSet<usize>>) -> (i64, Vec<usize>) {
+/// Computes the minimum cut of a graph using the [Stoer–Wagner algorithm][wiki].
+///
+/// This code is based on [this C++ implementation][cpp_impl], with some modifications. Since the
+/// puzzle graph has nodes with low degree (i.e. edges), a nested HashMap is used for the weighed
+/// graph instead of an adjacency matrix, to avoid iterating over a relatively big and very sparse
+/// matrix. Also a priority queue was added to speed up the selection of nodes in each phase.
+///
+/// [wiki]: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
+/// [cpp_impl]: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
+fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize) {
     let n = graph.len();
-    let mut best = (i64::MAX, vec![]);
-    let mut co = (0..n).map(|i| vec![i]).collect_vec();
-    let mut nodes = (0..n).collect_vec();
-    let mut mat = vec![vec![0; n]; n];
-    for (n, adj) in graph.iter().enumerate() {
-        for &m in adj.iter() {
-            mat[n][m] = 1;
-            mat[m][n] = 1;
-        }
-    }
+    let mut best = (i64::MAX, 0);
+    let mut combined_count = vec![1; n];
 
-    while nodes.len() > 1 {
-        let a = nodes[0];
-        let mut q: PriorityQueue<_, _> = graph[a].iter().map(|&n| (n, mat[a][n])).collect();
+    while graph.len() > 1 {
+        let a = *graph.keys().next().unwrap();
+        // Using a priority queue makes each phase O(E*log(V)) instead of O(V²).
+        let mut q: PriorityQueue<_, _> = graph[&a].iter().map(|(&i, &e)| (i, e)).collect();
         let mut s = a;
         let mut t = a;
-        let mut cut = 0;
-        for _ in 0..nodes.len() - 1 {
+        let mut min_cut_of_phase = 0;
+        for _ in 0..graph.len() - 1 {
             q.push_decrease(t, i64::MIN);
             s = t;
-            (t, cut) = q.pop().expect("queue should contain a node");
-            for &n in &graph[t] {
-                if !q.change_priority_by(&n, |w| *w += mat[t][n]) {
-                    q.push(n, mat[t][n]);
+            // Queue should not be empty, unless input graph is already disjoint.
+            (t, min_cut_of_phase) = q.pop().unwrap();
+            for (&i, &e) in graph[&t].iter() {
+                if !q.change_priority_by(&i, |w| *w += e) {
+                    q.push(i, e);
                 }
             }
         }
-        let min_cut_of_phase = cut;
-        if min_cut_of_phase < best.0 {
-            best = (min_cut_of_phase, co[t].clone());
-        }
-        let co_t = co[t].clone();
-        co[s].extend(co_t);
+        best = best.min((min_cut_of_phase, combined_count[t]));
+        combined_count[s] += combined_count[t];
 
-        for n in graph[t].clone() {
-            graph[n].remove(&t);
-            if n != s {
-                graph[s].insert(n);
-                graph[n].insert(s);
-                mat[s][n] += mat[t][n];
-                mat[n][s] = mat[s][n];
+        // Contract node t into node s.
+        for (i, e) in graph[&t].clone() {
+            // It'd be nice if Rust allowed to do `graph[&i].remove(&t)`
+            graph.get_mut(&i).unwrap().remove(&t);
+            if i != s {
+                *graph.get_mut(&s).unwrap().entry(i).or_insert(0) += e;
+                *graph.get_mut(&i).unwrap().entry(s).or_insert(0) += e;
             }
         }
-        nodes.remove(nodes.iter().position(|&n| n == t).unwrap());
-        graph[t].clear();
+        graph.remove(&t);
     }
 
     best
