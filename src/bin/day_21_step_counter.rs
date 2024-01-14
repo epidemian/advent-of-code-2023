@@ -1,25 +1,23 @@
-use anyhow::{ensure, Context};
 use pathfinding::directed::dijkstra::dijkstra_reach;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let (grid, width, height) = aoc::parse_char_grid(&input)?;
-    ensure!(width == height, "grid must be square");
-    let start = find_start_position(&grid).context("starting position not found")?;
+    anyhow::ensure!(width == height, "grid must be square");
 
-    let ans_1 = count_reachable_tiles(&grid, start, 64);
-    let ans_2 = extrapolate_reachable_tiles(&grid, start, 26501365);
+    let ans_1 = count_reachable_tiles(&grid, 64);
+    let ans_2 = extrapolate_reachable_tiles(&grid, 26501365);
     println!("{ans_1} {ans_2}");
 
     Ok(())
 }
 
 type Grid = Vec<Vec<char>>;
-type Point = (i64, i64);
 
-fn count_reachable_tiles(grid: &Grid, start_pos: Point, steps_count: u64) -> u64 {
+fn count_reachable_tiles(grid: &Grid, steps_count: u64) -> u64 {
     let size = grid.len() as i64;
-    let reachable_tiles = dijkstra_reach(&start_pos, |&(x, y), cost| {
+    let start = (size / 2, size / 2);
+    let reachable_tiles = dijkstra_reach(&start, |&(x, y), cost| {
         let dirs = [(0, -1), (1, 0), (0, 1), (-1, 0)];
         dirs.into_iter().filter_map(move |(dx, dy)| {
             if cost >= steps_count {
@@ -39,11 +37,11 @@ fn count_reachable_tiles(grid: &Grid, start_pos: Point, steps_count: u64) -> u64
         .count() as u64
 }
 
-fn extrapolate_reachable_tiles(grid: &Grid, start: Point, steps_count: i64) -> i64 {
+fn extrapolate_reachable_tiles(grid: &Grid, steps_count: i64) -> i64 {
     let size = grid.len() as i64;
 
     // For part 2, we do a quadratic extrapolation of this function.
-    let f = |x: i64| count_reachable_tiles(grid, start, (size / 2 + size * x) as u64) as i64;
+    let f = |x: i64| count_reachable_tiles(grid, (size / 2 + size * x) as u64) as i64;
 
     // In case of the actual input, this function is:
     // f(x) = #reachable_tiles(x * 131 + 65)
@@ -79,16 +77,4 @@ fn extrapolate_reachable_tiles(grid: &Grid, start: Point, steps_count: i64) -> i
     assert_eq!(f_2, f_quadratic(2));
 
     f_quadratic(steps_count / size)
-}
-
-// TODO: remove this and assume the start position is in the middle.
-fn find_start_position(grid: &Grid) -> Option<Point> {
-    for (row, y) in grid.iter().zip(0..) {
-        for (&tile, x) in row.iter().zip(0..) {
-            if tile == 'S' {
-                return Some((x, y));
-            }
-        }
-    }
-    None
 }
