@@ -247,3 +247,9 @@ As a sidenote: i was very much disappointed by the lack of good online solvers f
 At the same time, i was blown away with the power and usability of `sympy` and Python (Jupyter) notebooks. Python's local environment setup is another story; one of sadness and pain. But maybe it is precisely because of how painful it is to properly set up a local Python environment that tools like Jupyter and Google Colab exist.
 
 I wish a symbolic math package like `sympy` existed for Rust. Being a low-level language that can easily be interfaced with, a package like this could provide a common backend for multiple front-ends on different languages.
+
+Day 25: Snowverload
+
+A graph-theory-heavy puzzle. Ended up implementing the [Stoer–Wagner algorithm][https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm], which i initially copied from [an existing C++ implementation](https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h) but ended up modifying quite a lot to be more Rusty and also better fit puzzle requirements.
+
+A pretty challenging puzzle to end this year's Advent of Code. But TBF i've felt nearly all puzzles from day 18 onwards have been pretty difficult, so this one was no surprise.
