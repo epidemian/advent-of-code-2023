@@ -2,10 +2,7 @@ use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let sequences: Vec<Vec<i64>> = input
-        .lines()
-        .map(|l| l.split(' ').map(str::parse).try_collect())
-        .try_collect()?;
+    let sequences: Vec<_> = input.lines().map(aoc::parse_numbers).try_collect()?;
     let ans_1: i64 = sequences.iter().map(|s| extrapolate(s)).sum();
     let ans_2: i64 = sequences.iter().map(|s| extrapolate_back(s)).sum();
     println!("{ans_1} {ans_2}");

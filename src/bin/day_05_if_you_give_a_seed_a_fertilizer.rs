@@ -108,7 +108,7 @@ impl Range {
 
 impl RangeMap {
     fn parse(line: &str) -> aoc::Result<RangeMap> {
-        let nums: Vec<_> = line.split(' ').map(str::parse).try_collect()?;
+        let nums = aoc::parse_numbers(line)?;
         let [dst_start, src_start, length] = nums[..].try_into()?;
         let src = Range::new(src_start, src_start + length);
         Ok(RangeMap { src, dst_start })
@@ -117,14 +117,10 @@ impl RangeMap {
 
 fn parse_input(input: &str) -> aoc::Result<(Vec<u64>, Vec<Map>)> {
     let (seeds_part, rest) = input.split_once("\n\n").context("invalid input")?;
-    let seeds = &seeds_part
-        .strip_prefix("seeds: ")
-        .context("invalid input")?;
-    let seeds = seeds.split(' ').map(str::parse).try_collect()?;
-    let maps = rest.split("\n\n").map(parse_map).try_collect()?;
+    let seeds = aoc::parse_numbers(seeds_part)?;
+    let maps = rest
+        .split("\n\n")
+        .map(|block| block.lines().skip(1).map(RangeMap::parse).collect())
+        .try_collect()?;
     Ok((seeds, maps))
-}
-
-fn parse_map(block: &str) -> aoc::Result<Vec<RangeMap>> {
-    block.lines().skip(1).map(RangeMap::parse).collect()
 }

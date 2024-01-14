@@ -31,7 +31,8 @@ fn parse_card(line: &str) -> aoc::Result<(HashSet<u32>, HashSet<u32>)> {
     let (left, right) = numbers_part
         .split_once(" | ")
         .context("malformed card line")?;
-    let winning_numbers = left.split_whitespace().map(str::parse).try_collect()?;
-    let my_numbers = right.split_whitespace().map(str::parse).try_collect()?;
+    let winning_numbers = HashSet::from_iter(aoc::parse_numbers(left)?);
+    let my_numbers = HashSet::from_iter(aoc::parse_numbers(right)?);
+
     Ok((winning_numbers, my_numbers))
 }

@@ -1,5 +1,5 @@
 use anyhow::Context;
-use itertools::Itertools;
+use itertools::{join, Itertools};
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
@@ -7,19 +7,17 @@ fn main() -> aoc::Result<()> {
         .lines()
         .collect_tuple()
         .context("expected input to have two lines")?;
-    let times_s = line_1.strip_prefix("Time:").context("invalid input")?;
-    let dists_s = line_2.strip_prefix("Distance:").context("invalid input")?;
 
-    let times: Vec<u64> = times_s.split_whitespace().map(str::parse).try_collect()?;
-    let distances: Vec<u64> = dists_s.split_whitespace().map(str::parse).try_collect()?;
+    let times = aoc::parse_numbers(line_1)?;
+    let distances = aoc::parse_numbers(line_2)?;
     let ans_1: usize = times
-        .into_iter()
-        .zip(distances)
-        .map(|(time, record_dist)| ways_to_beat_record(time, record_dist))
+        .iter()
+        .zip(distances.iter())
+        .map(|(&time, &record_dist)| ways_to_beat_record(time, record_dist))
         .product();
 
-    let time: u64 = times_s.replace(' ', "").parse()?;
-    let record_dist: u64 = dists_s.replace(' ', "").parse()?;
+    let time = join(times, "").parse()?;
+    let record_dist = join(distances, "").parse()?;
     let ans_2 = ways_to_beat_record(time, record_dist);
 
     println!("{ans_1} {ans_2}");
