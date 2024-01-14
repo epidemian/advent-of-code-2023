@@ -62,7 +62,7 @@ fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize
         for _ in 0..graph.len() - 1 {
             q.push_decrease(t, i64::MIN);
             s = t;
-            // Queue should not be empty, unless input graph is already disjoint.
+            // Queue is never empty. It will at least have the previous t.
             (t, min_cut_of_phase) = q.pop().unwrap();
             for (&i, &e) in graph[&t].iter() {
                 if !q.change_priority_by(&i, |w| *w += e) {
@@ -74,7 +74,8 @@ fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize
         combined_count[s] += combined_count[t];
 
         // Contract node t into node s.
-        for (i, e) in graph[&t].clone() {
+        let t_edges = graph.remove(&t).unwrap();
+        for (i, e) in t_edges {
             // It'd be nice if Rust allowed to do `graph[&i].remove(&t)`
             graph.get_mut(&i).unwrap().remove(&t);
             if i != s {
@@ -82,7 +83,6 @@ fn global_min_cut(mut graph: HashMap<usize, HashMap<usize, i64>>) -> (i64, usize
                 *graph.get_mut(&i).unwrap().entry(s).or_insert(0) += e;
             }
         }
-        graph.remove(&t);
     }
 
     best
