@@ -4,29 +4,28 @@ use itertools::Itertools;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
 
-    let mut hands: Vec<_> = input.lines().map(|l| parse_line(l, false)).try_collect()?;
-    hands.sort_by_key(|(hand, _bid)| *hand);
-    let ans_1 = total_winnings(&hands);
+    let hands = input.lines().map(|l| parse_line(l, false)).try_collect()?;
+    let ans_1 = total_winnings(hands);
 
-    let mut hands: Vec<_> = input.lines().map(|l| parse_line(l, true)).try_collect()?;
-    hands.sort_by_key(|(hand, _bid)| *hand);
-    let ans_2 = total_winnings(&hands);
+    let hands = input.lines().map(|l| parse_line(l, true)).try_collect()?;
+    let ans_2 = total_winnings(hands);
 
     println!("{ans_1} {ans_2}");
     Ok(())
 }
 
-fn total_winnings(hands: &[(Hand, u64)]) -> u64 {
+fn total_winnings(mut hands: Vec<(Hand, u64)>) -> u64 {
+    hands.sort();
     hands.iter().zip(1..).map(|(&(_, bid), i)| bid * i).sum()
 }
 
-#[derive(Eq, PartialEq, Clone, Copy, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct Hand {
     hand_type: HandType,
     cards: [Card; 5],
 }
 
-#[derive(Ord, Eq, PartialEq, PartialOrd, Copy, Clone)]
+#[derive(Ord, Eq, PartialEq, PartialOrd)]
 enum HandType {
     HighCard,
     OnePair,
