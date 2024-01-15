@@ -1,5 +1,5 @@
 use anyhow::Context;
-use itertools::{join, Itertools};
+use itertools::Itertools;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
@@ -16,8 +16,8 @@ fn main() -> aoc::Result<()> {
         .map(|(&time, &record_dist)| ways_to_beat_record(time, record_dist))
         .product();
 
-    let time = join(times, "").parse()?;
-    let record_dist = join(distances, "").parse()?;
+    let time = times.iter().join("").parse()?;
+    let record_dist = distances.iter().join("").parse()?;
     let ans_2 = ways_to_beat_record(time, record_dist);
 
     println!("{ans_1} {ans_2}");
