@@ -11,7 +11,7 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 enum Dir {
     Up,
     Down,
