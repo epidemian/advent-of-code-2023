@@ -1,16 +1,17 @@
-use anyhow::Context;
+use anyhow::{ensure, Context};
 use priority_queue::PriorityQueue;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let graph = parse_graph(&input)?;
-    let (cut_size, cut_nodes) = global_min_cut(to_weighted_graph(&graph));
-    anyhow::ensure!(
+    let (cut_size, group_a, group_b) =
+        global_min_cut(to_weighted_graph(&graph)).context("no minimum cut found")?;
+    ensure!(
         cut_size == 3,
         "expected the minimum cut of 3, got {cut_size}"
     );
-    let answer = cut_nodes * (graph.len() - cut_nodes);
+    let answer = group_a * group_b;
     println!("{answer}");
     Ok(())
 }
@@ -27,7 +28,7 @@ fn parse_graph(input: &str) -> aoc::Result<HashMap<&str, Vec<&str>>> {
     Ok(graph)
 }
 
-type WeightedGraph = HashMap<usize, HashMap<usize, i64>>;
+type WeightedGraph = HashMap<usize, HashMap<usize, u32>>;
 
 /// Converts the string nodes to numeric indices and adds a weight of 1 to all edges.
 fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> WeightedGraph {
@@ -48,34 +49,44 @@ fn to_weighted_graph(graph: &HashMap<&str, Vec<&str>>) -> WeightedGraph {
 /// graph instead of an adjacency matrix, to avoid iterating over a relatively big and very sparse
 /// matrix. Also a priority queue was added to speed up the selection of nodes in each phase.
 ///
-/// The input graph must be connected. If it is already disjoint, the minimum cut size is undefined.
+/// Returns the size of of the minimum cut (i.e. the sum of the cut edges' weights) and the amount
+/// of nodes on each side of the cut. The input graph must be connected and bigger than 1 node,
+/// otherwise it returns None.
 ///
 /// [wiki]: https://en.wikipedia.org/wiki/Stoer%E2%80%93Wagner_algorithm
 /// [cpp_impl]: https://github.com/kth-competitive-programming/kactl/blob/782a5f4e38fff0efb2ae83761e18fb829d6aa00c/content/graph/GlobalMinCut.h
-fn global_min_cut(mut graph: WeightedGraph) -> (i64, usize) {
+fn global_min_cut(mut graph: WeightedGraph) -> Option<(u32, usize, usize)> {
     let n = graph.len();
-    let mut best = (i64::MAX, 0);
+    if n <= 1 {
+        return None;
+    }
+
+    let mut min_cut = (u32::MAX, 0, 0);
     let mut combined_count = vec![1; n];
 
     while graph.len() > 1 {
         let a = *graph.keys().next().unwrap();
+        let mut visited = HashSet::from([a]);
         // Using a priority queue makes each phase O(E*log(V)) instead of O(V²).
-        let mut q: PriorityQueue<_, _> = graph[&a].iter().map(|(&i, &e)| (i, e)).collect();
+        let mut to_visit: PriorityQueue<_, _> = graph[&a].iter().map(|(i, e)| (*i, *e)).collect();
         let mut s = a;
         let mut t = a;
         let mut min_cut_of_phase = 0;
-        for _ in 0..graph.len() - 1 {
-            q.push_decrease(t, i64::MIN);
+        while visited.len() < graph.len() {
             s = t;
-            // Queue is never empty. It will at least have the previous t.
-            (t, min_cut_of_phase) = q.pop().unwrap();
-            for (&i, &e) in graph[&t].iter() {
-                if !q.change_priority_by(&i, |w| *w += e) {
-                    q.push(i, e);
+            // Queue can only be empty if the original graph was disconnected.
+            (t, min_cut_of_phase) = to_visit.pop()?;
+            for (i, e) in graph[&t].iter() {
+                if visited.contains(i) {
+                    continue;
+                }
+                if !to_visit.change_priority_by(i, |w| *w += e) {
+                    to_visit.push(*i, *e);
                 }
             }
+            visited.insert(t);
         }
-        best = best.min((min_cut_of_phase, combined_count[t]));
+        min_cut = min_cut.min((min_cut_of_phase, combined_count[t], n - combined_count[t]));
         combined_count[s] += combined_count[t];
 
         // Contract node t into node s.
@@ -90,5 +101,5 @@ fn global_min_cut(mut graph: WeightedGraph) -> (i64, usize) {
         }
     }
 
-    best
+    Some(min_cut)
 }
