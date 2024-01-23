@@ -25,7 +25,7 @@ fn main() -> aoc::Result<()> {
     let mut conj_first_low_emits = HashMap::new();
 
     for button_push in 1.. {
-        let mut pulses = VecDeque::from_iter([("button", "broadcaster", LOW)]);
+        let mut pulses = VecDeque::from([("button", "broadcaster", LOW)]);
 
         while let Some(pulse) = pulses.pop_front() {
             let (src, dst, value) = pulse;

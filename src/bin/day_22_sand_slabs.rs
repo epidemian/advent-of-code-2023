@@ -59,8 +59,7 @@ fn count_falls_if_disintegrated(
     supports: &[HashSet<usize>],
     supported_by: &[HashSet<usize>],
 ) -> usize {
-    let mut falling_bricks: HashSet<_> = HashSet::from_iter([brick_id]);
-
+    let mut falling_bricks = HashSet::from([brick_id]);
     let mut to_fall = vec![brick_id];
     while let Some(brick_id) = to_fall.pop() {
         let unsupported_bricks = supports[brick_id]

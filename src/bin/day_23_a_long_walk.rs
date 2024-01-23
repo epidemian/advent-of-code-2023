@@ -22,7 +22,7 @@ fn build_graph(grid: &[Vec<char>], width: usize, height: usize, slippery_slope: 
     let start_pos = (1, 0);
     let end_pos = (width - 2, height - 1);
 
-    let mut node_indices = HashMap::<_, _>::from_iter([(start_pos, START), (end_pos, END)]);
+    let mut node_indices = HashMap::from([(start_pos, START), (end_pos, END)]);
     let mut graph = vec![vec![], vec![]];
 
     let mut unvisited = vec![(start_pos, (start_pos.0, start_pos.1 + 1))];
