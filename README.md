@@ -2,7 +2,7 @@
 
 My solutions for [2023's Advent of Code](https://adventofcode.com/2023).
 
-Daily solutions' code in in the [`src/bin`](src/bin) directory.
+Daily solutions' code is in the [`src/bin`](src/bin) directory.
 
 I recorded my solves on [this YouTube playlist](https://www.youtube.com/playlist?list=PL3kymB6hDjyVK6P1j7TgqxmOtjxXmzbFc).
 
