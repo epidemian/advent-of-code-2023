@@ -31,7 +31,7 @@ fn count_energized_tiles(
     start_x: usize,
     start_y: usize,
     start_dir: u32,
-) -> aoc::Result<u32> {
+) -> aoc::Result<usize> {
     let mut beams_grid = vec![vec![EMPTY; grid[0].len()]; grid.len()];
     let mut beams = vec![(start_x, start_y, start_dir)];
     while let Some(beam) = beams.pop() {
@@ -74,13 +74,6 @@ fn count_energized_tiles(
             }
         }
     }
-    let mut energized_tiles_count = 0;
-    for row in beams_grid.iter() {
-        for &tile_beams in row.iter() {
-            if tile_beams != 0 {
-                energized_tiles_count += 1;
-            }
-        }
-    }
-    Ok(energized_tiles_count)
+    let energized_tiles = beams_grid.iter().flatten().filter(|beams| **beams != 0);
+    Ok(energized_tiles.count())
 }
