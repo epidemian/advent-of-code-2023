@@ -27,7 +27,7 @@ const DOWN: u32 = 4;
 const RIGHT: u32 = 8;
 
 fn count_energized_tiles(
-    grid: &Vec<Vec<char>>,
+    grid: &[Vec<char>],
     start_x: usize,
     start_y: usize,
     start_dir: u32,
