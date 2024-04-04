@@ -20,11 +20,11 @@ pub fn parse_char_grid(input: &str) -> Result<(Vec<Vec<char>>, usize, usize)> {
 
 pub fn parse_grid<T>(
     input: &str,
-    mut parse_char: impl FnMut(char) -> Result<T>,
+    parse_char: impl Fn(char) -> Result<T>,
 ) -> Result<(Vec<Vec<T>>, usize, usize)> {
     let grid: Vec<Vec<_>> = input
         .lines()
-        .map(|l| l.chars().map(&mut parse_char).try_collect())
+        .map(|l| l.chars().map(&parse_char).try_collect())
         .try_collect()?;
 
     let height = grid.len();
