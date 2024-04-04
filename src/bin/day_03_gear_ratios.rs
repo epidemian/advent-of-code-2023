@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let grid: Vec<&str> = input.lines().collect();
+    let (grid, ..) = aoc::parse_char_grid(&input)?;
     let number_spans = get_number_spans(&grid)?;
 
     // Part 1
@@ -21,8 +21,8 @@ fn main() -> aoc::Result<()> {
     }
     let mut gear_ratios_sum = 0;
     for (y, line) in grid.iter().enumerate() {
-        for (x, byte) in line.bytes().enumerate() {
-            if byte == b'*' {
+        for (x, &ch) in line.iter().enumerate() {
+            if ch == '*' {
                 let mut neighbor_nums = HashSet::new();
                 for (nx, ny, _b) in neighbors(x, y, &grid) {
                     if let Some(num) = numbers_by_xy.get(&(nx, ny)) {
@@ -40,15 +40,11 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
-type Grid<'a> = [&'a str];
+type Grid = Vec<Vec<char>>;
 
 fn is_part_number(start_x: usize, end_x: usize, y: usize, grid: &Grid) -> bool {
     (start_x..=end_x)
-        .any(|x| neighbors(x, y, grid).any(|(.., byte)| !byte.is_ascii_digit() && byte != b'.'))
-}
-
-fn at(x: usize, y: usize, grid: &Grid) -> u8 {
-    grid[y].as_bytes()[x]
+        .any(|x| neighbors(x, y, grid).any(|(.., ch)| !ch.is_ascii_digit() && ch != '.'))
 }
 
 // Finds all numbers on the grid and returns tuples with (number, start_x, end_x, y) where
@@ -58,12 +54,12 @@ fn get_number_spans(grid: &Grid) -> aoc::Result<Vec<(u32, usize, usize, usize)>>
     for (y, line) in grid.iter().enumerate() {
         let mut x = 0;
         while x < line.len() {
-            if at(x, y, grid).is_ascii_digit() {
+            if grid[y][x].is_ascii_digit() {
                 let mut end_x = x;
-                while end_x + 1 < line.len() && at(end_x + 1, y, grid).is_ascii_digit() {
+                while end_x + 1 < line.len() && grid[y][end_x + 1].is_ascii_digit() {
                     end_x += 1;
                 }
-                let num = line[x..=end_x].parse()?;
+                let num = String::from_iter(&line[x..=end_x]).parse()?;
                 spans.push((num, x, end_x, y));
                 x = end_x + 1;
             } else {
@@ -74,16 +70,12 @@ fn get_number_spans(grid: &Grid) -> aoc::Result<Vec<(u32, usize, usize, usize)>>
     Ok(spans)
 }
 
-fn neighbors<'a>(
-    x: usize,
-    y: usize,
-    grid: &'a Grid,
-) -> impl Iterator<Item = (usize, usize, u8)> + 'a {
+fn neighbors(x: usize, y: usize, grid: &Grid) -> impl Iterator<Item = (usize, usize, char)> + '_ {
     (-1..=1)
         .flat_map(|dx| (-1..=1).map(move |dy| (dx, dy)))
         .filter_map(move |(dx, dy)| {
             let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-            let byte = *grid.get(ny)?.as_bytes().get(nx)?;
-            Some((nx, ny, byte))
+            let ch = *grid.get(ny)?.get(nx)?;
+            Some((nx, ny, ch))
         })
 }
