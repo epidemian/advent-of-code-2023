@@ -3,20 +3,19 @@ use std::iter;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let (grid, width, height) = aoc::parse_char_grid(&input)?;
-    let initial_energized_tiles = count_energized_tiles(&grid, 0, 0, RIGHT)?;
+    let initial = count_energized_tiles(&grid, 0, 0, RIGHT)?;
 
-    let all_starting_beams = iter::empty()
+    let starting_beams = iter::empty()
         .chain((0..height).map(|y| (width - 1, y, LEFT)))
         .chain((0..height).map(|y| (0, y, RIGHT)))
         .chain((0..width).map(|x| (x, height - 1, UP)))
         .chain((0..width).map(|x| (x, 0, DOWN)));
-    let mut max_energized_tiles = 0;
-    for (x, y, dir) in all_starting_beams {
-        let energized_tiles = count_energized_tiles(&grid, x, y, dir)?;
-        max_energized_tiles = max_energized_tiles.max(energized_tiles)
+    let mut max = 0;
+    for (x, y, dir) in starting_beams {
+        max = max.max(count_energized_tiles(&grid, x, y, dir)?)
     }
 
-    println!("{initial_energized_tiles} {max_energized_tiles}");
+    println!("{initial} {max}");
     Ok(())
 }
 
