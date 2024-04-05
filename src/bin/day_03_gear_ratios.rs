@@ -15,7 +15,7 @@ fn main() -> aoc::Result<()> {
     // Part 2
     let mut numbers_by_xy = HashMap::new();
     for (num, start_x, end_x, y) in number_spans {
-        for x in start_x..=end_x {
+        for x in start_x..end_x {
             numbers_by_xy.insert((x, y), num);
         }
     }
@@ -43,28 +43,24 @@ fn main() -> aoc::Result<()> {
 type Grid = Vec<Vec<char>>;
 
 fn is_part_number(start_x: usize, end_x: usize, y: usize, grid: &Grid) -> bool {
-    (start_x..=end_x)
+    (start_x..end_x)
         .any(|x| neighbors(x, y, grid).any(|(.., ch)| !ch.is_ascii_digit() && ch != '.'))
 }
 
 // Finds all numbers on the grid and returns tuples with (number, start_x, end_x, y) where
-// start_x..=end_x is the span of the number on the grid.
+// start_x..end_x is the span of the number on the grid.
 fn get_number_spans(grid: &Grid) -> aoc::Result<Vec<(u32, usize, usize, usize)>> {
     let mut spans = vec![];
     for (y, line) in grid.iter().enumerate() {
         let mut x = 0;
         while x < line.len() {
-            if grid[y][x].is_ascii_digit() {
-                let mut end_x = x;
-                while end_x + 1 < line.len() && grid[y][end_x + 1].is_ascii_digit() {
-                    end_x += 1;
-                }
-                let num = String::from_iter(&line[x..=end_x]).parse()?;
-                spans.push((num, x, end_x, y));
-                x = end_x + 1;
-            } else {
-                x += 1;
+            let digits = grid[y][x..].iter().take_while(|ch| ch.is_ascii_digit());
+            let s = String::from_iter(digits);
+            if !s.is_empty() {
+                let num = s.parse()?;
+                spans.push((num, x, x + s.len(), y));
             }
+            x += s.len().max(1)
         }
     }
     Ok(spans)
