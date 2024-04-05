@@ -1,8 +1,9 @@
-use std::collections::{HashMap, HashSet};
+use itertools::{iproduct, Itertools};
+use std::collections::HashMap;
 
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
-    let (grid, ..) = aoc::parse_char_grid(&input)?;
+    let (grid, width, height) = aoc::parse_char_grid(&input)?;
     let number_spans = get_number_spans(&grid)?;
 
     // Part 1
@@ -13,28 +14,20 @@ fn main() -> aoc::Result<()> {
         .sum();
 
     // Part 2
-    let mut numbers_by_xy = HashMap::new();
-    for (num, start_x, end_x, y) in number_spans {
-        for x in start_x..end_x {
-            numbers_by_xy.insert((x, y), num);
-        }
-    }
-    let mut gear_ratios_sum = 0;
-    for (y, line) in grid.iter().enumerate() {
-        for (x, &ch) in line.iter().enumerate() {
-            if ch == '*' {
-                let mut neighbor_nums = HashSet::new();
-                for (nx, ny, _b) in neighbors(x, y, &grid) {
-                    if let Some(num) = numbers_by_xy.get(&(nx, ny)) {
-                        neighbor_nums.insert(*num);
-                    }
-                }
-                if neighbor_nums.len() == 2 {
-                    gear_ratios_sum += neighbor_nums.iter().product::<u32>();
-                }
-            }
-        }
-    }
+    let numbers_by_xy: HashMap<(usize, usize), u32> = number_spans
+        .into_iter()
+        .flat_map(|(num, start_x, end_x, y)| (start_x..end_x).map(move |x| ((x, y), num)))
+        .collect();
+    let gear_ratios_sum: u32 = iproduct!(0..width, 0..height)
+        .filter(|&(x, y)| grid[y][x] == '*')
+        .filter_map(|(x, y)| {
+            let neighbor_nums = neighbors(x, y, &grid)
+                .filter_map(|(nx, ny, _)| numbers_by_xy.get(&(nx, ny)))
+                .unique();
+            let (a, b) = neighbor_nums.collect_tuple()?;
+            Some(a * b)
+        })
+        .sum();
 
     println!("{part_numbers_sum} {gear_ratios_sum}");
     Ok(())
