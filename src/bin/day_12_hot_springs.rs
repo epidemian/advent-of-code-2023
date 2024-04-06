@@ -90,12 +90,7 @@ fn parse_record(line: &str) -> aoc::Result<Record> {
 }
 
 fn unfold_record((springs_row, group_numbers): Record) -> Record {
-    let mut unfolded_row = springs_row.clone();
-    let mut unfolded_group_numbers = group_numbers.clone();
-    for _ in 0..4 {
-        unfolded_row.push(b'?');
-        unfolded_row.extend(&springs_row);
-        unfolded_group_numbers.extend(&group_numbers);
-    }
-    (unfolded_row, unfolded_group_numbers)
+    let unfolded_row = [springs_row.as_slice()].repeat(5).join(&b'?');
+    let unfolded_numbers = group_numbers.repeat(5);
+    (unfolded_row, unfolded_numbers)
 }
