@@ -14,11 +14,9 @@ fn main() -> aoc::Result<()> {
     Ok(())
 }
 
-fn summarize_pattern(
-    (pattern, width, height): &(Vec<Vec<char>>, usize, usize),
-    expected_diff: usize,
-) -> usize {
-    for row in 1..*height {
+fn summarize_pattern(pattern: &(Vec<Vec<char>>, usize, usize), expected_diff: usize) -> usize {
+    let (ref pattern, width, height) = *pattern;
+    for row in 1..height {
         let count_row_diffs = |(row_a, row_b): (usize, usize)| {
             pattern[row_a]
                 .iter()
@@ -26,20 +24,20 @@ fn summarize_pattern(
                 .filter(|(tile_a, tile_b)| tile_a != tile_b)
                 .count()
         };
-        let diff_count: usize = (0..row).rev().zip(row..*height).map(count_row_diffs).sum();
+        let diff_count: usize = (0..row).rev().zip(row..height).map(count_row_diffs).sum();
         if diff_count == expected_diff {
             return row * 100;
         }
     }
 
-    for col in 1..*width {
+    for col in 1..width {
         let count_col_diffs = |(col_a, col_b)| {
             pattern
                 .iter()
                 .filter(|row| row[col_a] != row[col_b])
                 .count()
         };
-        let diff_count: usize = (0..col).rev().zip(col..*width).map(count_col_diffs).sum();
+        let diff_count: usize = (0..col).rev().zip(col..width).map(count_col_diffs).sum();
         if diff_count == expected_diff {
             return col;
         }
