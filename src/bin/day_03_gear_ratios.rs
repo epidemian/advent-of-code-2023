@@ -60,11 +60,9 @@ fn get_number_spans(grid: &Grid) -> aoc::Result<Vec<(u32, usize, usize, usize)>>
 }
 
 fn neighbors(x: usize, y: usize, grid: &Grid) -> impl Iterator<Item = (usize, usize, char)> + '_ {
-    (-1..=1)
-        .flat_map(|dx| (-1..=1).map(move |dy| (dx, dy)))
-        .filter_map(move |(dx, dy)| {
-            let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
-            let ch = *grid.get(ny)?.get(nx)?;
-            Some((nx, ny, ch))
-        })
+    iproduct!(-1..=1, -1..=1).filter_map(move |(dx, dy)| {
+        let (nx, ny) = (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy));
+        let ch = *grid.get(ny)?.get(nx)?;
+        Some((nx, ny, ch))
+    })
 }
