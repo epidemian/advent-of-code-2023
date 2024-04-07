@@ -33,51 +33,49 @@ fn main() -> aoc::Result<()> {
 }
 
 type Grid = Vec<Vec<char>>;
-type Point = (isize, isize);
+type Pos = (usize, usize);
+type Dir = (isize, isize);
 
-const NORTH: Point = (0, -1);
-const WEST: Point = (-1, 0);
-const SOUTH: Point = (0, 1);
-const EAST: Point = (1, 0);
+const NORTH: Dir = (0, -1);
+const WEST: Dir = (-1, 0);
+const SOUTH: Dir = (0, 1);
+const EAST: Dir = (1, 0);
 
-fn tilt_platform(grid: &mut Grid, (dx, dy): Point) {
+fn tilt_platform(grid: &mut Grid, (dx, dy): Dir) {
     let size = grid.len() as isize;
     let neg_dir = (-dx, -dy);
-    // Orthogonal direction. Only right or down.
-    let ortho_dir = (dy.abs(), dx.abs());
-
     let mut line_start = (0, 0);
     for _ in 0..size {
         let off_x = if dx == 1 { size - 1 } else { 0 };
         let off_y = if dy == 1 { size - 1 } else { 0 };
         let mut pos = add(line_start, (off_x, off_y));
-        let mut last_empty_pos = pos;
+        let mut last_empty = pos;
         // We move on a vertical or horizontal line, going in the opposite of the given direction,
-        // and "rolling" the round rocks in the given direction up to last_empty_pos, updating the
+        // and "rolling" the round rocks in the given direction "down" to `last_empty`, updating the
         // latter as we go.
         for _ in 0..size {
-            let ch = at(grid, pos);
-            match ch {
-                '#' => last_empty_pos = add(pos, neg_dir),
+            match at(grid, pos) {
+                '#' => last_empty = add(pos, neg_dir),
                 'O' => {
                     *at(grid, pos) = '.';
-                    *at(grid, last_empty_pos) = 'O';
-                    last_empty_pos = add(last_empty_pos, neg_dir)
+                    *at(grid, last_empty) = 'O';
+                    last_empty = add(last_empty, neg_dir)
                 }
                 _ => {}
             }
             pos = add(pos, neg_dir);
         }
-        line_start = add(line_start, ortho_dir);
+        // Move start down if we're tilting horizontally, and right if tiling vertically.
+        line_start = add(line_start, (dy.abs(), dx.abs()));
     }
 }
 
-fn at(grid: &mut Grid, (x, y): Point) -> &mut char {
-    &mut grid[y as usize][x as usize]
+fn at(grid: &mut Grid, (x, y): Pos) -> &mut char {
+    &mut grid[y][x]
 }
 
-fn add((x1, y1): Point, (x2, y2): Point) -> Point {
-    (x1 + x2, y1 + y2)
+fn add((x, y): Pos, (dx, dy): Dir) -> Pos {
+    (x.wrapping_add_signed(dx), y.wrapping_add_signed(dy))
 }
 
 fn get_north_beams_load(grid: &Grid) -> usize {
