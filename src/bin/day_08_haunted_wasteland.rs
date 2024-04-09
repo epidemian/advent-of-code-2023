@@ -5,7 +5,7 @@ use std::collections::HashMap;
 fn main() -> aoc::Result<()> {
     let input = aoc::read_stdin()?;
     let (instructions, nodes) = input.split_once("\n\n").context("invalid input")?;
-    let nodes: HashMap<_, _> = nodes.lines().map(parse_node).try_collect()?;
+    let nodes = nodes.lines().map(parse_node).try_collect()?;
 
     let ans_1 = count_steps("AAA", instructions, &nodes)?;
     let ans_2 = count_steps_multiple_starts(instructions, &nodes)?;
@@ -46,20 +46,11 @@ fn count_steps_multiple_starts(instructions: &str, nodes: &Graph) -> aoc::Result
     //
     // With these assumptions —which are true for the puzzle input— the answer is then the least
     // common multiple of all these counts.
-    let start_ids: Vec<_> = nodes
+    nodes
         .keys()
-        .copied()
         .filter(|id| id.ends_with('A'))
-        .collect();
-    let counts: Vec<_> = start_ids
-        .iter()
         .map(|start_id| count_steps(start_id, instructions, nodes))
-        .try_collect()?;
-    let combined_count = counts
-        .into_iter()
-        .reduce(lcm)
-        .context("no starting nodes")?;
-    Ok(combined_count)
+        .fold_ok(1, lcm)
 }
 
 fn gcd(a: u64, b: u64) -> u64 {
