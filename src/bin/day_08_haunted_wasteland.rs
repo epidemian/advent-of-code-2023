@@ -8,7 +8,20 @@ fn main() -> aoc::Result<()> {
     let nodes = nodes.lines().map(parse_node).try_collect()?;
 
     let ans_1 = count_steps("AAA", instructions, &nodes)?;
-    let ans_2 = count_steps_multiple_starts(instructions, &nodes)?;
+
+    // This part 2 solution assumes:
+    // 1. That the amount of steps to reach the end from start_id is a multiple of the instructions
+    //    count for each start_id.
+    // 2. That those amounts of steps are also equal to the amount of steps that it takes to reach
+    //    the end again if we keep going.
+    //
+    // With these assumptions —which are true for the puzzle input— the answer is then the least
+    // common multiple of all these counts.
+    let ans_2 = nodes
+        .keys()
+        .filter(|id| id.ends_with('A'))
+        .map(|start_id| count_steps(start_id, instructions, &nodes))
+        .fold_ok(1, lcm)?;
 
     println!("{ans_1} {ans_2}");
     Ok(())
@@ -35,22 +48,6 @@ fn count_steps(start: &str, instructions: &str, nodes: &Graph) -> aoc::Result<u6
             return Ok(count);
         }
     }
-}
-
-fn count_steps_multiple_starts(instructions: &str, nodes: &Graph) -> aoc::Result<u64> {
-    // This code assumes:
-    // 1. That the amount of steps to reach the end from start_id is a multiple of the instructions
-    //    count for each start_id.
-    // 2. That those amounts of steps are also equal to the amount of steps that it takes to reach
-    //    the end again if we keep going.
-    //
-    // With these assumptions —which are true for the puzzle input— the answer is then the least
-    // common multiple of all these counts.
-    nodes
-        .keys()
-        .filter(|id| id.ends_with('A'))
-        .map(|start_id| count_steps(start_id, instructions, nodes))
-        .fold_ok(1, lcm)
 }
 
 fn gcd(a: u64, b: u64) -> u64 {
